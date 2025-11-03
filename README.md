@@ -2,15 +2,15 @@
 
 피스허브 프론트엔드 레포지토리입니다.
 
-## プロジェクト概要
+## 프로젝트 개요
 
-- **フレームワーク**: Next.js 15
-- **ライブラリ**: React 19
-- **スタイリング**: Tailwind CSS
-- **リンティング**: ESLint (eslint-config-next)
-- **パッケージマネージャー**: npm
+- **프레임워크**: Next.js 15
+- **라이브러리**: React 19
+- **스타일링**: Tailwind CSS
+- **린팅**: ESLint (eslint-config-next)
+- **패키지 매니저**: npm
 
-## ファイル構造
+## 파일 구조
 
 ```
 /home/juhwan/front/
@@ -33,40 +33,40 @@
 └───types/
 ```
 
-## 依存関係の管理
+## 의존성 관리
 
-### 主要な依存関係
+### 주요 의존성
 
 - `react`: ^19.0.0
 - `react-dom`: ^19.0.0
 - `next`: ^15.1.4
 
-### 依存関係の更新
+### 의존성 업데이트
 
-現在、いくつかの依存関係を更新する必要があります。以下のコマンドで更新できます。
+현재 일부 의존성을 업데이트해야 합니다. 다음 명령어로 업데이트할 수 있습니다.
 
 ```bash
 npm install @types/node@latest eslint-config-next@latest next@latest tailwindcss@latest
 ```
 
-## デプロイガイド
+## 배포 가이드
 
-### ビルド
+### 빌드
 
-以下のコマンドでプロジェクトをビルドします。
+다음 명령어로 프로젝트를 빌드합니다.
 
 ```bash
 npm run build
 ```
 
-### 起動
+### 시작
 
-ビルド後、以下のコマンドでサーバーを起動します。
+빌드 후 다음 명령어로 서버를 시작합니다.
 
 ```bash
 npm run start
 ```
 
-### Vercelへのデプロイ
+### Vercel에 배포
 
-Next.jsプロジェクトはVercelに簡単にデプロイできます。GitHubリポジトリをVercelに接続すると、自動的にデプロイされます。
+Next.js 프로젝트는 Vercel에 쉽게 배포할 수 있습니다. GitHub 저장소를 Vercel에 연결하면 자동으로 배포됩니다.
