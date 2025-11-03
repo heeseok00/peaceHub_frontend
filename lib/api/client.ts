@@ -25,6 +25,7 @@ import {
   mockWeeklySchedule,
   mockPreferences,
   mockAssignments,
+  mockAllSchedules,
   TASKS,
 } from './mockData';
 
@@ -143,6 +144,22 @@ export async function getMySchedule(): Promise<WeeklySchedule> {
 export async function saveSchedule(schedule: WeeklySchedule): Promise<void> {
   await delay(500);
   console.log('스케줄 저장됨:', schedule);
+}
+
+/**
+ * 모든 사용자의 스케줄 가져오기
+ * 백엔드 연동 시: GET /schedules?userIds=id1,id2,...
+ */
+export async function getAllSchedules(userIds: string[]): Promise<Map<string, WeeklySchedule>> {
+  await delay(300);
+  const result = new Map<string, WeeklySchedule>();
+  userIds.forEach(id => {
+    const schedule = mockAllSchedules.get(id);
+    if (schedule) {
+      result.set(id, schedule);
+    }
+  });
+  return result;
 }
 
 // ============================================

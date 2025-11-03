@@ -94,6 +94,7 @@ const createEmptySchedule = (): WeeklySchedule => {
   return schedule as WeeklySchedule;
 };
 
+// User-5 (현재 사용자) 스케줄
 export const mockWeeklySchedule: WeeklySchedule = (() => {
   const schedule = createEmptySchedule();
 
@@ -126,6 +127,137 @@ export const mockWeeklySchedule: WeeklySchedule = (() => {
 
   return schedule;
 })();
+
+// 모든 사용자의 스케줄 (겹침 테스트용)
+export const mockAllSchedules: Map<string, WeeklySchedule> = new Map([
+  // User-1: 양희석
+  ['user-1', (() => {
+    const schedule = createEmptySchedule();
+    // 평일 조용시간 (0-8시)
+    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+      for (let hour = 0; hour <= 8; hour++) {
+        schedule[day as DayOfWeek][hour] = 'quiet';
+      }
+    });
+    // 평일 외출 (9-17시)
+    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+      for (let hour = 9; hour <= 17; hour++) {
+        schedule[day as DayOfWeek][hour] = 'out';
+      }
+    });
+    // 평일 조용시간 (18-23시)
+    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+      for (let hour = 18; hour <= 23; hour++) {
+        schedule[day as DayOfWeek][hour] = 'quiet';
+      }
+    });
+    // 주말 조용시간 (0-10시)
+    ['sat', 'sun'].forEach(day => {
+      for (let hour = 0; hour <= 10; hour++) {
+        schedule[day as DayOfWeek][hour] = 'quiet';
+      }
+    });
+    return schedule;
+  })()],
+
+  // User-2: 이세용
+  ['user-2', (() => {
+    const schedule = createEmptySchedule();
+    // 평일 조용시간 (0-7시, 20-23시)
+    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+      for (let hour = 0; hour <= 7; hour++) {
+        schedule[day as DayOfWeek][hour] = 'quiet';
+      }
+      for (let hour = 20; hour <= 23; hour++) {
+        schedule[day as DayOfWeek][hour] = 'quiet';
+      }
+    });
+    // 평일 외출 (8-19시)
+    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+      for (let hour = 8; hour <= 19; hour++) {
+        schedule[day as DayOfWeek][hour] = 'out';
+      }
+    });
+    // 주말 조용시간 (0-11시, 22-23시)
+    ['sat', 'sun'].forEach(day => {
+      for (let hour = 0; hour <= 11; hour++) {
+        schedule[day as DayOfWeek][hour] = 'quiet';
+      }
+      schedule[day as DayOfWeek][22] = 'quiet';
+      schedule[day as DayOfWeek][23] = 'quiet';
+    });
+    return schedule;
+  })()],
+
+  // User-3: 정준영
+  ['user-3', (() => {
+    const schedule = createEmptySchedule();
+    // 평일 조용시간 (0-6시, 19-23시)
+    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+      for (let hour = 0; hour <= 6; hour++) {
+        schedule[day as DayOfWeek][hour] = 'quiet';
+      }
+      for (let hour = 19; hour <= 23; hour++) {
+        schedule[day as DayOfWeek][hour] = 'quiet';
+      }
+    });
+    // 평일 외출 (10-18시)
+    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+      for (let hour = 10; hour <= 18; hour++) {
+        schedule[day as DayOfWeek][hour] = 'out';
+      }
+    });
+    // 평일 조용시간 (7-9시)
+    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+      schedule[day as DayOfWeek][7] = 'quiet';
+      schedule[day as DayOfWeek][8] = 'quiet';
+      schedule[day as DayOfWeek][9] = 'quiet';
+    });
+    // 주말 조용시간 (0-9시, 21-23시)
+    ['sat', 'sun'].forEach(day => {
+      for (let hour = 0; hour <= 9; hour++) {
+        schedule[day as DayOfWeek][hour] = 'quiet';
+      }
+      for (let hour = 21; hour <= 23; hour++) {
+        schedule[day as DayOfWeek][hour] = 'quiet';
+      }
+    });
+    return schedule;
+  })()],
+
+  // User-4: 조재현
+  ['user-4', (() => {
+    const schedule = createEmptySchedule();
+    // 평일 조용시간 (0-8시)
+    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+      for (let hour = 0; hour <= 8; hour++) {
+        schedule[day as DayOfWeek][hour] = 'quiet';
+      }
+    });
+    // 평일 외출 (9-16시)
+    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+      for (let hour = 9; hour <= 16; hour++) {
+        schedule[day as DayOfWeek][hour] = 'out';
+      }
+    });
+    // 평일 조용시간 (17-23시)
+    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+      for (let hour = 17; hour <= 23; hour++) {
+        schedule[day as DayOfWeek][hour] = 'quiet';
+      }
+    });
+    // 주말 조용시간 (종일)
+    ['sat', 'sun'].forEach(day => {
+      for (let hour = 0; hour <= 23; hour++) {
+        schedule[day as DayOfWeek][hour] = 'quiet';
+      }
+    });
+    return schedule;
+  })()],
+
+  // User-5: 허주환 (현재 사용자)
+  ['user-5', mockWeeklySchedule],
+]);
 
 // ============================================
 // 더미 선호도 데이터
@@ -180,7 +312,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-1',
     roomId: 'room-1',
     taskId: 'bathroom',
-    days: ['sat'],
+    days: ['mon', 'sat'],
     weekStart: '2024-12-30',
     createdAt: '2024-12-30T03:00:00Z',
   },
@@ -189,7 +321,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-2',
     roomId: 'room-1',
     taskId: 'laundry',
-    days: ['sun'],
+    days: ['mon', 'sun'],
     weekStart: '2024-12-30',
     createdAt: '2024-12-30T03:00:00Z',
   },
@@ -207,7 +339,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-4',
     roomId: 'room-1',
     taskId: 'trash',
-    days: ['tue', 'thu'],
+    days: ['tue', 'thu', 'fri'],
     weekStart: '2024-12-30',
     createdAt: '2024-12-30T03:00:00Z',
   },
@@ -216,7 +348,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-5',
     roomId: 'room-1',
     taskId: 'room',
-    days: ['wed'],
+    days: ['mon', 'wed', 'fri'],
     weekStart: '2024-12-30',
     createdAt: '2024-12-30T03:00:00Z',
   },
@@ -227,7 +359,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-1',
     roomId: 'room-1',
     taskId: 'trash',
-    days: ['mon', 'thu'],
+    days: ['mon', 'wed', 'thu'],
     weekStart: '2025-01-06',
     createdAt: '2025-01-06T03:00:00Z',
   },
@@ -236,7 +368,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-2',
     roomId: 'room-1',
     taskId: 'room',
-    days: ['tue'],
+    days: ['tue', 'wed', 'thu'],
     weekStart: '2025-01-06',
     createdAt: '2025-01-06T03:00:00Z',
   },
@@ -245,7 +377,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-3',
     roomId: 'room-1',
     taskId: 'laundry',
-    days: ['wed'],
+    days: ['wed', 'thu', 'sat'],
     weekStart: '2025-01-06',
     createdAt: '2025-01-06T03:00:00Z',
   },
@@ -254,7 +386,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-4',
     roomId: 'room-1',
     taskId: 'bathroom',
-    days: ['sat'],
+    days: ['tue', 'thu', 'sat'],
     weekStart: '2025-01-06',
     createdAt: '2025-01-06T03:00:00Z',
   },
@@ -263,7 +395,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-5',
     roomId: 'room-1',
     taskId: 'dishes',
-    days: ['tue', 'fri', 'sun'],
+    days: ['tue', 'wed', 'thu', 'fri', 'sun'],
     weekStart: '2025-01-06',
     createdAt: '2025-01-06T03:00:00Z',
   },
@@ -274,7 +406,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-1',
     roomId: 'room-1',
     taskId: 'dishes',
-    days: ['mon', 'thu'],
+    days: ['mon', 'tue', 'thu'],
     weekStart: '2025-01-13',
     createdAt: '2025-01-13T03:00:00Z',
   },
@@ -283,7 +415,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-2',
     roomId: 'room-1',
     taskId: 'bathroom',
-    days: ['sun'],
+    days: ['mon', 'tue', 'sun'],
     weekStart: '2025-01-13',
     createdAt: '2025-01-13T03:00:00Z',
   },
@@ -292,7 +424,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-3',
     roomId: 'room-1',
     taskId: 'trash',
-    days: ['tue', 'fri'],
+    days: ['tue', 'wed', 'fri'],
     weekStart: '2025-01-13',
     createdAt: '2025-01-13T03:00:00Z',
   },
@@ -301,7 +433,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-4',
     roomId: 'room-1',
     taskId: 'room',
-    days: ['wed', 'sat'],
+    days: ['tue', 'wed', 'sat'],
     weekStart: '2025-01-13',
     createdAt: '2025-01-13T03:00:00Z',
   },
@@ -310,7 +442,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-5',
     roomId: 'room-1',
     taskId: 'laundry',
-    days: ['thu'],
+    days: ['mon', 'tue', 'thu', 'fri'],
     weekStart: '2025-01-13',
     createdAt: '2025-01-13T03:00:00Z',
   },
@@ -321,7 +453,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-1',
     roomId: 'room-1',
     taskId: 'room',
-    days: ['mon', 'fri'],
+    days: ['mon', 'wed', 'fri'],
     weekStart: '2025-01-20',
     createdAt: '2025-01-20T03:00:00Z',
   },
@@ -330,7 +462,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-2',
     roomId: 'room-1',
     taskId: 'dishes',
-    days: ['wed', 'sat'],
+    days: ['mon', 'wed', 'sat'],
     weekStart: '2025-01-20',
     createdAt: '2025-01-20T03:00:00Z',
   },
@@ -339,7 +471,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-3',
     roomId: 'room-1',
     taskId: 'bathroom',
-    days: ['sun'],
+    days: ['wed', 'fri', 'sun'],
     weekStart: '2025-01-20',
     createdAt: '2025-01-20T03:00:00Z',
   },
@@ -348,7 +480,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-4',
     roomId: 'room-1',
     taskId: 'laundry',
-    days: ['tue'],
+    days: ['tue', 'wed', 'fri'],
     weekStart: '2025-01-20',
     createdAt: '2025-01-20T03:00:00Z',
   },
@@ -357,7 +489,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-5',
     roomId: 'room-1',
     taskId: 'trash',
-    days: ['thu', 'sat'],
+    days: ['mon', 'wed', 'thu', 'sat'],
     weekStart: '2025-01-20',
     createdAt: '2025-01-20T03:00:00Z',
   },
@@ -368,7 +500,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-1',
     roomId: 'room-1',
     taskId: 'laundry',
-    days: ['wed'],
+    days: ['tue', 'wed', 'fri'],
     weekStart: '2025-01-27',
     createdAt: '2025-01-27T03:00:00Z',
   },
@@ -377,7 +509,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-2',
     roomId: 'room-1',
     taskId: 'trash',
-    days: ['mon', 'thu'],
+    days: ['mon', 'tue', 'thu'],
     weekStart: '2025-01-27',
     createdAt: '2025-01-27T03:00:00Z',
   },
@@ -386,7 +518,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-3',
     roomId: 'room-1',
     taskId: 'room',
-    days: ['tue', 'fri'],
+    days: ['tue', 'thu', 'fri'],
     weekStart: '2025-01-27',
     createdAt: '2025-01-27T03:00:00Z',
   },
@@ -395,7 +527,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-4',
     roomId: 'room-1',
     taskId: 'dishes',
-    days: ['wed', 'sun'],
+    days: ['mon', 'tue', 'wed', 'sun'],
     weekStart: '2025-01-27',
     createdAt: '2025-01-27T03:00:00Z',
   },
@@ -404,7 +536,7 @@ export const mockAssignments: Assignment[] = [
     userId: 'user-5',
     roomId: 'room-1',
     taskId: 'bathroom',
-    days: ['sat'],
+    days: ['mon', 'tue', 'fri', 'sat'],
     weekStart: '2025-01-27',
     createdAt: '2025-01-27T03:00:00Z',
   },

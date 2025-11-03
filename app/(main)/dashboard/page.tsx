@@ -1,22 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import MonthlyCalendar from '@/components/dashboard/MonthlyCalendar';
-import FilterButtons from '@/components/dashboard/FilterButtons';
-import DailyTasks from '@/components/dashboard/DailyTasks';
+import CombinedTimelineBar from '@/components/dashboard/CombinedTimelineBar';
 import TimelineBar from '@/components/dashboard/TimelineBar';
 import type { User, Assignment, WeeklySchedule } from '@/types';
 import {
   getCurrentUser,
   getRoomMembers,
   getCurrentAssignments,
-  getMySchedule,
+  getAllSchedules,
 } from '@/lib/api/client';
 
 /**
  * 대시보드 페이지
  *
- * 월간 캘린더 + 필터 + 업무 목록 + 타임테이블
+ * 월간 캘린더 + 통합 타임라인 + 개인 타임라인
  */
 
 export default function DashboardPage() {
@@ -24,13 +23,15 @@ export default function DashboardPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [schedule, setSchedule] = useState<WeeklySchedule | null>(null);
+  const [allSchedules, setAllSchedules] = useState<Map<string, WeeklySchedule>>(new Map());
 
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null); // null = 전체
 
   const [isLoading, setIsLoading] = useState(true);
+
+  // 스크롤 타겟 ref
+  const detailsRef = useRef<HTMLDivElement>(null);
 
   /**
    * 초기 데이터 로드
@@ -38,18 +39,20 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [user, members, assignmentsData, scheduleData] =
-          await Promise.all([
-            getCurrentUser(),
-            getRoomMembers('room-1'),
-            getCurrentAssignments(),
-            getMySchedule(),
-          ]);
+        const [user, members, assignmentsData] = await Promise.all([
+          getCurrentUser(),
+          getRoomMembers('room-1'),
+          getCurrentAssignments(),
+        ]);
 
         setCurrentUser(user);
         setUsers(members);
         setAssignments(assignmentsData);
-        setSchedule(scheduleData);
+
+        // 모든 사용자의 스케줄 가져오기
+        const userIds = members.map(u => u.id);
+        const schedules = await getAllSchedules(userIds);
+        setAllSchedules(schedules);
       } catch (error) {
         console.error('데이터 로드 실패:', error);
       } finally {
@@ -59,6 +62,17 @@ export default function DashboardPage() {
 
     loadData();
   }, []);
+
+  /**
+   * 날짜 클릭 핸들러 (스크롤 포함)
+   */
+  const handleDateClick = (date: Date) => {
+    setSelectedDate(date);
+    // 부드러운 스크롤
+    setTimeout(() => {
+      detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
 
   if (isLoading) {
     return (
@@ -71,7 +85,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (!currentUser || !schedule) {
+  if (!currentUser) {
     return (
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
         <div className="text-center">
@@ -81,9 +95,12 @@ export default function DashboardPage() {
     );
   }
 
+  // 현재 사용자의 스케줄
+  const mySchedule = allSchedules.get(currentUser.id);
+
   return (
     <div className="bg-gradient-to-br from-primary-50 to-primary-100 px-4 py-8 min-h-[calc(100vh-4rem)]">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6">
         {/* 헤더 */}
         <div className="text-center">
           <h1 className="text-3xl font-bold text-primary-700 mb-2">
@@ -94,38 +111,44 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* 월간 캘린더 */}
-        <MonthlyCalendar
-          currentMonth={currentMonth}
-          selectedDate={selectedDate}
-          assignments={assignments}
-          selectedUserId={selectedUserId}
-          onDateClick={setSelectedDate}
-          onMonthChange={setCurrentMonth}
-        />
+        {/* 월간 캘린더 (축소됨) */}
+        <div className="max-w-3xl mx-auto">
+          <MonthlyCalendar
+            currentMonth={currentMonth}
+            selectedDate={selectedDate}
+            assignments={assignments}
+            selectedUserId={null}
+            onDateClick={handleDateClick}
+            onMonthChange={setCurrentMonth}
+          />
+        </div>
 
-        {/* 필터 버튼 */}
-        <FilterButtons
-          users={users}
-          selectedUserId={selectedUserId}
-          onFilterChange={setSelectedUserId}
-        />
+        {/* 선택된 날짜 상세 (스크롤 타겟) */}
+        <div ref={detailsRef} className="space-y-6 scroll-mt-20">
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-gray-800">
+              {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일 상세
+            </h2>
+          </div>
 
-        {/* 업무 목록 */}
-        <DailyTasks
-          date={selectedDate}
-          assignments={assignments}
-          users={users}
-          selectedUserId={selectedUserId}
-        />
+          {/* 통합 타임라인 (모두) */}
+          <CombinedTimelineBar
+            date={selectedDate}
+            allSchedules={allSchedules}
+            assignments={assignments}
+            users={users}
+          />
 
-        {/* 타임테이블 바 */}
-        <TimelineBar
-          date={new Date()} // 오늘 날짜
-          schedule={schedule}
-          assignments={assignments}
-          userId={currentUser.id}
-        />
+          {/* 개인 타임라인 (나) */}
+          {mySchedule && (
+            <TimelineBar
+              date={selectedDate}
+              schedule={mySchedule}
+              assignments={assignments}
+              userId={currentUser.id}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

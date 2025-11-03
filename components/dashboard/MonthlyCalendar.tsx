@@ -110,32 +110,32 @@ export default function MonthlyCalendar({
   today.setHours(0, 0, 0, 0);
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
       {/* 헤더: 월 네비게이션 */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <button
           onClick={goToPrevMonth}
-          className="px-3 py-1 rounded hover:bg-gray-100 text-gray-700 font-medium"
+          className="px-2 py-1 text-sm rounded hover:bg-gray-100 text-gray-700 font-medium"
         >
-          ◀ 이전달
+          ◀
         </button>
-        <h3 className="text-lg font-bold text-gray-800">
+        <h3 className="text-base font-bold text-gray-800">
           {year}년 {month + 1}월
         </h3>
         <button
           onClick={goToNextMonth}
-          className="px-3 py-1 rounded hover:bg-gray-100 text-gray-700 font-medium"
+          className="px-2 py-1 text-sm rounded hover:bg-gray-100 text-gray-700 font-medium"
         >
-          다음달 ▶
+          ▶
         </button>
       </div>
 
       {/* 요일 헤더 */}
-      <div className="grid grid-cols-7 gap-1 mb-2">
+      <div className="grid grid-cols-7 gap-1 mb-1">
         {['일', '월', '화', '수', '목', '금', '토'].map((day, index) => (
           <div
             key={day}
-            className={`text-center text-sm font-semibold py-2 ${
+            className={`text-center text-xs font-semibold py-1 ${
               index === 0
                 ? 'text-red-600'
                 : index === 6
@@ -174,7 +174,7 @@ export default function MonthlyCalendar({
             <button
               key={date.toISOString()}
               onClick={() => onDateClick(date)}
-              className={`aspect-square border rounded-lg p-1 flex flex-col items-center justify-start hover:bg-gray-50 transition-colors ${
+              className={`h-12 w-full border rounded p-1 flex flex-col items-center justify-center hover:bg-gray-50 transition-colors ${
                 isToday
                   ? 'border-primary-500 bg-primary-50'
                   : isSelected
@@ -184,9 +184,9 @@ export default function MonthlyCalendar({
             >
               {/* 날짜 숫자 */}
               <div
-                className={`text-sm font-medium ${
+                className={`text-xs font-medium ${
                   isToday
-                    ? 'text-primary-700'
+                    ? 'text-primary-700 font-bold'
                     : date.getDay() === 0
                     ? 'text-red-600'
                     : date.getDay() === 6
@@ -197,21 +197,10 @@ export default function MonthlyCalendar({
                 {date.getDate()}
               </div>
 
-              {/* 집안일 이모지 */}
-              {emojis.length > 0 && (
-                <div className="flex gap-0.5 mt-1">
-                  {emojis.map((emoji, i) => (
-                    <span key={i} className="text-xs">
-                      {emoji}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* 집안일 있음 표시 */}
+              {/* 집안일 있음 표시 (간단한 점) */}
               {tasksForDay.length > 0 && (
-                <div className="mt-auto">
-                  <span className="text-xs text-primary-600">●</span>
+                <div className="mt-0.5">
+                  <span className="text-[8px] text-primary-600">●</span>
                 </div>
               )}
             </button>

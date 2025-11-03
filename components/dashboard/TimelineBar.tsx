@@ -92,7 +92,7 @@ export default function TimelineBar({
     <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
       <div className="mb-3">
         <h3 className="text-sm font-semibold text-gray-800">
-          🕐 오늘의 타임테이블
+          👤 나의 타임테이블
         </h3>
         <p className="text-xs text-gray-500">
           {date.getMonth() + 1}월 {date.getDate()}일
