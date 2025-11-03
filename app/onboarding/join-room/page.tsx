@@ -40,6 +40,7 @@ export default function JoinRoomPage() {
   // 방 생성 성공 모달
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdRoomCode, setCreatedRoomCode] = useState('');
+  const [isCopied, setIsCopied] = useState(false);
 
   /**
    * 방 만들기 핸들러
@@ -109,10 +110,25 @@ export default function JoinRoomPage() {
   };
 
   /**
+   * 방 코드 복사 핸들러
+   */
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(createdRoomCode);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (error) {
+      console.error('복사 실패:', error);
+      alert('복사에 실패했습니다');
+    }
+  };
+
+  /**
    * 모달 닫기 및 다음 페이지로 이동
    */
   const handleModalClose = () => {
     setShowSuccessModal(false);
+    setIsCopied(false);
     router.push('/onboarding/schedule');
   };
 
@@ -247,13 +263,17 @@ export default function JoinRoomPage() {
           </p>
           <div className="bg-primary-50 border-2 border-primary-200 rounded-lg p-6">
             <p className="text-sm text-gray-600 mb-2">방 코드</p>
-            <p className="text-4xl font-bold text-primary-700 tracking-wider">
+            <p className="text-4xl font-bold text-primary-700 tracking-wider mb-4">
               {createdRoomCode}
             </p>
+            <Button
+              onClick={handleCopyCode}
+              variant={isCopied ? 'outline' : 'primary'}
+              size="md"
+            >
+              {isCopied ? '✓ 복사됨' : '복사하기'}
+            </Button>
           </div>
-          <p className="text-sm text-gray-500">
-            이 코드는 나중에 다시 확인할 수 없으니 꼭 메모해두세요
-          </p>
         </div>
       </Modal>
     </div>

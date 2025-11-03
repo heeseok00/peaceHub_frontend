@@ -19,9 +19,8 @@ interface TimelineBarProps {
 
 // 시간대별 색상
 const TIMELINE_COLORS = {
-  sleep: 'bg-purple-400',
-  busy: 'bg-red-400',
-  quiet: 'bg-blue-400',
+  out: 'bg-red-400',
+  quiet: 'bg-gray-600',
   task: 'bg-green-500',
   free: 'bg-gray-100',
 };
@@ -52,12 +51,10 @@ export default function TimelineBar({
       // 색상 결정: 업무 시간 > 스케줄 타입 > 비는 시간
       let colorClass = TIMELINE_COLORS.free;
 
-      if (slotType === 'sleep') {
-        colorClass = TIMELINE_COLORS.sleep;
-      } else if (slotType === 'busy') {
-        colorClass = TIMELINE_COLORS.busy;
-      } else if (slotType === 'quiet') {
+      if (slotType === 'quiet') {
         colorClass = TIMELINE_COLORS.quiet;
+      } else if (slotType === 'out') {
+        colorClass = TIMELINE_COLORS.out;
       }
 
       // 업무 시간은 초록색으로 강조 (예: 저녁 시간대)
@@ -113,16 +110,12 @@ export default function TimelineBar({
       {/* 범례 */}
       <div className="mt-3 flex gap-4 flex-wrap text-xs">
         <div className="flex items-center gap-1">
-          <div className={`w-4 h-4 ${TIMELINE_COLORS.sleep} rounded`}></div>
-          <span className="text-gray-700">수면</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className={`w-4 h-4 ${TIMELINE_COLORS.busy} rounded`}></div>
-          <span className="text-gray-700">바쁨</span>
-        </div>
-        <div className="flex items-center gap-1">
           <div className={`w-4 h-4 ${TIMELINE_COLORS.quiet} rounded`}></div>
-          <span className="text-gray-700">조용</span>
+          <span className="text-gray-700">조용시간</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className={`w-4 h-4 ${TIMELINE_COLORS.out} rounded`}></div>
+          <span className="text-gray-700">외출</span>
         </div>
         <div className="flex items-center gap-1">
           <div className={`w-4 h-4 ${TIMELINE_COLORS.task} rounded`}></div>

@@ -2,8 +2,8 @@
 // 타임테이블 관련 타입
 // ============================================
 
-// 시간대 상태: 조용, 수면, 바쁨 (null = 비는 시간)
-export type TimeSlot = 'quiet' | 'sleep' | 'busy' | null;
+// 시간대 상태: 조용시간, 외출 (null = 비는 시간)
+export type TimeSlot = 'quiet' | 'out' | null;
 
 // 요일 타입
 export type DayOfWeek = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';

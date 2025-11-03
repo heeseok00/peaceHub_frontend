@@ -18,15 +18,13 @@ export default function ScheduleEditor({ schedule, onChange }: ScheduleEditorPro
           <h3 className="font-semibold text-gray-800">💡 사용 방법</h3>
           <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
             <li>
-              <strong>브러시 모드</strong>를 선택하고 시간대를 클릭하거나
-              드래그하세요
+              <strong>조용시간</strong> 또는 <strong>외출</strong>을 선택하고 시간대를 클릭/드래그하세요
             </li>
             <li>
-              <strong>요일 복사</strong>로 같은 패턴을 빠르게 적용할 수
-              있어요
+              <strong>같은 색 클릭 시 지우기</strong>, 다른 색 클릭 시 덮어쓰기
             </li>
             <li>
-              <strong>평일/주말 일괄 적용</strong>으로 반복 작업을 줄이세요
+              <strong>빠른 설정</strong>으로 요일 복사/붙여넣기, 평일/주말 일괄 적용
             </li>
             <li>비는 시간은 아무것도 선택하지 않으면 됩니다</li>
           </ul>

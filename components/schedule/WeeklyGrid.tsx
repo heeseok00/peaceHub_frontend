@@ -1,16 +1,15 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import type { WeeklySchedule, DayOfWeek, TimeSlot } from '@/types';
 import { DAY_NAMES } from '@/types';
 
 /**
  * 주간 타임테이블 그리드 컴포넌트
  *
- * 편의 기능:
- * 1. Paint 모드: 타입 선택 후 드래그로 칠하기
- * 2. 요일 복사: 한 요일을 다른 요일로 복사
- * 3. 빠른 선택: 드래그로 여러 시간대 한번에 선택
+ * TimelineBar 스타일의 가로 배열 디자인
+ * - 토글 로직: 같은 색 클릭 시 지우기, 다른 색 클릭 시 덮어쓰기
+ * - 2가지 상태: 조용시간, 외출
  */
 
 interface WeeklyGridProps {
@@ -18,40 +17,45 @@ interface WeeklyGridProps {
   onChange: (schedule: WeeklySchedule) => void;
 }
 
-// 시간대 색상 매핑
+// 시간대 색상 매핑 (TimelineBar와 통일)
 const SLOT_COLORS: Record<string, string> = {
-  quiet: 'bg-blue-200 hover:bg-blue-300 border-blue-300',
-  sleep: 'bg-purple-200 hover:bg-purple-300 border-purple-300',
-  busy: 'bg-red-200 hover:bg-red-300 border-red-300',
-  null: 'bg-white hover:bg-gray-100 border-gray-200',
+  quiet: 'bg-gray-600',
+  out: 'bg-red-400',
+  null: 'bg-gray-100',
 };
 
 // 시간대 라벨
 const SLOT_LABELS: Record<string, string> = {
-  quiet: '조용',
-  sleep: '수면',
-  busy: '바쁨',
-  null: '지우기',
+  quiet: '조용시간',
+  out: '외출',
 };
 
 export default function WeeklyGrid({ schedule, onChange }: WeeklyGridProps) {
   // 현재 선택된 Paint 모드
-  const [paintMode, setPaintMode] = useState<TimeSlot>('sleep');
+  const [paintMode, setPaintMode] = useState<TimeSlot>('quiet');
 
   // 드래그 상태
   const [isDragging, setIsDragging] = useState(false);
 
-  // 요일 복사 소스
+  // 복사 소스 요일
   const [copySource, setCopySource] = useState<DayOfWeek | null>(null);
 
   const days: DayOfWeek[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
   /**
-   * 셀 클릭 핸들러
+   * 셀 클릭 핸들러 (토글 로직)
    */
   const handleCellClick = (day: DayOfWeek, hour: number) => {
+    const currentValue = schedule[day]?.[hour];
     const newSchedule = { ...schedule };
-    newSchedule[day] = { ...newSchedule[day], [hour]: paintMode };
+
+    // 토글 로직: 같은 값이면 null로 변경, 다르면 paintMode로 변경
+    if (currentValue === paintMode) {
+      newSchedule[day] = { ...newSchedule[day], [hour]: null };
+    } else {
+      newSchedule[day] = { ...newSchedule[day], [hour]: paintMode };
+    }
+
     onChange(newSchedule);
   };
 
@@ -80,16 +84,6 @@ export default function WeeklyGrid({ schedule, onChange }: WeeklyGridProps) {
   };
 
   /**
-   * 요일 전체 복사
-   */
-  const handleCopyDay = (sourceDay: DayOfWeek, targetDay: DayOfWeek) => {
-    const newSchedule = { ...schedule };
-    newSchedule[targetDay] = { ...schedule[sourceDay] };
-    onChange(newSchedule);
-    setCopySource(null);
-  };
-
-  /**
    * 요일 전체 지우기
    */
   const handleClearDay = (day: DayOfWeek) => {
@@ -103,7 +97,17 @@ export default function WeeklyGrid({ schedule, onChange }: WeeklyGridProps) {
   };
 
   /**
-   * 평일 전체 적용
+   * 요일 전체 복사
+   */
+  const handleCopyDay = (sourceDay: DayOfWeek, targetDay: DayOfWeek) => {
+    const newSchedule = { ...schedule };
+    newSchedule[targetDay] = { ...schedule[sourceDay] };
+    onChange(newSchedule);
+    setCopySource(null); // 복사 후 초기화
+  };
+
+  /**
+   * 평일 전체 적용 (월요일 기준)
    */
   const handleApplyWeekdays = () => {
     if (!schedule.mon) return;
@@ -115,7 +119,7 @@ export default function WeeklyGrid({ schedule, onChange }: WeeklyGridProps) {
   };
 
   /**
-   * 주말 적용
+   * 주말 적용 (토요일 → 일요일)
    */
   const handleApplyWeekend = () => {
     if (!schedule.sat) return;
@@ -124,86 +128,118 @@ export default function WeeklyGrid({ schedule, onChange }: WeeklyGridProps) {
     onChange(newSchedule);
   };
 
+  /**
+   * 시간 라벨 렌더링 (2시간 간격)
+   */
+  const renderTimeLabels = () => {
+    const labels = [];
+    for (let hour = 0; hour < 24; hour += 2) {
+      labels.push(
+        <div key={hour} className="flex-[2] text-center text-xs text-gray-600">
+          {hour}
+        </div>
+      );
+    }
+    return labels;
+  };
+
+  /**
+   * 요일별 타임라인 렌더링
+   */
+  const renderDayTimeline = (day: DayOfWeek) => {
+    const blocks = [];
+    const daySchedule = schedule[day];
+
+    for (let hour = 0; hour < 24; hour++) {
+      const slotType = daySchedule?.[hour];
+      const colorClass = SLOT_COLORS[slotType || 'null'];
+
+      blocks.push(
+        <div
+          key={hour}
+          onMouseDown={() => handleMouseDown(day, hour)}
+          onMouseEnter={() => handleMouseEnter(day, hour)}
+          className={`flex-1 h-10 ${colorClass} border-r border-white cursor-pointer transition-opacity hover:opacity-80`}
+          title={`${DAY_NAMES[day]} ${hour}시 - ${slotType ? SLOT_LABELS[slotType] : '비는 시간'}`}
+        />
+      );
+    }
+
+    return blocks;
+  };
+
   return (
     <div className="space-y-6" onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
       {/* Paint 모드 선택 툴바 */}
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
         <p className="text-sm font-medium text-gray-700 mb-3">
-          브러시 모드 선택 (클릭/드래그로 시간대 선택)
+          상태 선택 (클릭/드래그로 시간대 선택, 같은 색 클릭 시 지우기)
         </p>
-        <div className="flex gap-2 flex-wrap">
-          {(['sleep', 'busy', 'quiet', null] as TimeSlot[]).map((mode) => (
+        <div className="flex gap-3">
+          {(['quiet', 'out'] as TimeSlot[]).map((mode) => (
             <button
-              key={mode || 'null'}
+              key={mode}
               onClick={() => setPaintMode(mode)}
-              className={`px-4 py-2 rounded-lg border-2 font-medium transition-all ${
+              className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${
                 paintMode === mode
                   ? 'ring-2 ring-primary-500 ring-offset-2'
                   : ''
-              } ${SLOT_COLORS[mode || 'null']}`}
+              }`}
             >
-              {SLOT_LABELS[mode || 'null']}
+              <div className={`w-6 h-6 ${SLOT_COLORS[mode]} rounded`}></div>
+              <span className="text-gray-800">{SLOT_LABELS[mode]}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* 그리드 */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
-        <div className="flex gap-1">
-          {/* 시간 라벨 열 */}
-          <div className="flex flex-col gap-0.5">
-            <div className="h-8 text-xs font-medium text-gray-600 flex items-center justify-center">
-              시간
-            </div>
-            {Array.from({ length: 24 }, (_, i) => (
-              <div
-                key={i}
-                className="h-6 w-12 text-xs text-gray-600 flex items-center justify-end pr-2"
-              >
-                {i}시
-              </div>
-            ))}
+      {/* 타임테이블 그리드 (TimelineBar 스타일) */}
+      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="space-y-4">
+          {/* 시간 라벨 */}
+          <div className="flex pl-12">
+            {renderTimeLabels()}
           </div>
 
-          {/* 요일 열들 */}
+          {/* 요일별 타임라인 */}
           {days.map((day) => (
-            <div key={day} className="flex flex-col gap-0.5 flex-1 min-w-[60px]">
-              {/* 요일 헤더 */}
-              <div className="h-8 flex items-center justify-center">
-                <span className="text-sm font-bold text-gray-700">
-                  {DAY_NAMES[day]}
-                </span>
+            <div key={day} className="flex items-center gap-2">
+              {/* 요일 라벨 */}
+              <div className="w-10 text-sm font-bold text-gray-700 text-center">
+                {DAY_NAMES[day]}
               </div>
 
-              {/* 시간 셀들 */}
-              {Array.from({ length: 24 }, (_, hour) => {
-                const slotValue = schedule[day]?.[hour];
-                return (
-                  <div
-                    key={hour}
-                    onMouseDown={() => handleMouseDown(day, hour)}
-                    onMouseEnter={() => handleMouseEnter(day, hour)}
-                    className={`h-6 border cursor-pointer select-none transition-colors ${
-                      SLOT_COLORS[slotValue || 'null']
-                    }`}
-                    title={`${DAY_NAMES[day]} ${hour}시 - ${
-                      slotValue ? SLOT_LABELS[slotValue] : '비는 시간'
-                    }`}
-                  />
-                );
-              })}
+              {/* 타임라인 바 */}
+              <div className="flex-1 flex rounded overflow-hidden border border-gray-300">
+                {renderDayTimeline(day)}
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* 요일 관리 버튼 */}
+      {/* 빠른 설정 */}
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
         <p className="text-sm font-medium text-gray-700 mb-3">빠른 설정</p>
 
+        {/* 일괄 적용 버튼 */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={handleApplyWeekdays}
+            className="flex-1 px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg text-sm font-medium"
+          >
+            월요일 → 평일 전체 적용
+          </button>
+          <button
+            onClick={handleApplyWeekend}
+            className="flex-1 px-4 py-2 bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-lg text-sm font-medium"
+          >
+            토요일 → 일요일 적용
+          </button>
+        </div>
+
         {/* 요일별 액션 */}
-        <div className="grid grid-cols-7 gap-2 mb-4">
+        <div className="grid grid-cols-7 gap-2">
           {days.map((day) => (
             <div key={day} className="flex flex-col gap-1">
               <span className="text-xs font-medium text-gray-600 text-center">
@@ -211,9 +247,7 @@ export default function WeeklyGrid({ schedule, onChange }: WeeklyGridProps) {
               </span>
               <button
                 onClick={() =>
-                  copySource === day
-                    ? setCopySource(null)
-                    : setCopySource(day)
+                  copySource === day ? setCopySource(null) : setCopySource(day)
                 }
                 className={`text-xs px-2 py-1 rounded ${
                   copySource === day
@@ -239,45 +273,6 @@ export default function WeeklyGrid({ schedule, onChange }: WeeklyGridProps) {
               </button>
             </div>
           ))}
-        </div>
-
-        {/* 일괄 적용 버튼 */}
-        <div className="flex gap-2">
-          <button
-            onClick={handleApplyWeekdays}
-            className="flex-1 px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg text-sm font-medium"
-          >
-            월요일 → 평일 전체 적용
-          </button>
-          <button
-            onClick={handleApplyWeekend}
-            className="flex-1 px-4 py-2 bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-lg text-sm font-medium"
-          >
-            토요일 → 일요일 적용
-          </button>
-        </div>
-      </div>
-
-      {/* 범례 */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-        <p className="text-sm font-medium text-gray-700 mb-3">범례</p>
-        <div className="flex gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-purple-200 border border-purple-300 rounded"></div>
-            <span className="text-sm text-gray-700">수면 시간</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-red-200 border border-red-300 rounded"></div>
-            <span className="text-sm text-gray-700">바쁜 시간</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-blue-200 border border-blue-300 rounded"></div>
-            <span className="text-sm text-gray-700">조용한 시간</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-white border border-gray-200 rounded"></div>
-            <span className="text-sm text-gray-700">비는 시간</span>
-          </div>
         </div>
       </div>
     </div>

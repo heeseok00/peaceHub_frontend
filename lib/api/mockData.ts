@@ -97,30 +97,30 @@ const createEmptySchedule = (): WeeklySchedule => {
 export const mockWeeklySchedule: WeeklySchedule = (() => {
   const schedule = createEmptySchedule();
 
-  // 평일 수면 시간 (0-7시)
+  // 평일 조용시간 (0-7시)
   ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
     for (let hour = 0; hour <= 7; hour++) {
-      schedule[day as DayOfWeek][hour] = 'sleep';
+      schedule[day as DayOfWeek][hour] = 'quiet';
     }
   });
 
-  // 평일 조용한 시간 (8-9시, 공부 시간)
+  // 평일 조용시간 (8-9시, 공부 시간)
   ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
     schedule[day as DayOfWeek][8] = 'quiet';
     schedule[day as DayOfWeek][9] = 'quiet';
   });
 
-  // 평일 바쁜 시간 (10-18시, 수업/일)
+  // 평일 외출 시간 (10-18시, 수업/일)
   ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
     for (let hour = 10; hour <= 18; hour++) {
-      schedule[day as DayOfWeek][hour] = 'busy';
+      schedule[day as DayOfWeek][hour] = 'out';
     }
   });
 
-  // 주말 수면 시간 (0-9시)
+  // 주말 조용시간 (0-9시)
   ['sat', 'sun'].forEach(day => {
     for (let hour = 0; hour <= 9; hour++) {
-      schedule[day as DayOfWeek][hour] = 'sleep';
+      schedule[day as DayOfWeek][hour] = 'quiet';
     }
   });
 
