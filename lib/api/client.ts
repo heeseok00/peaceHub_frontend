@@ -54,7 +54,7 @@ export async function getGoogleAuthUrl(): Promise<string> {
     return `${BASE_URL}/auth/google`;
   }
   // Mock: 온보딩 프로필 페이지로 직접 이동
-  //return '/onboarding/profile';
+  return '/onboarding/profile';
 }
 
 /**
@@ -152,6 +152,10 @@ export async function updateProfile(data: {
  * 백엔드 연동 시: POST /rooms
  */
 export async function createRoom(name: string): Promise<Room> {
+  if (USE_REAL_ROOM) {
+    return await endpoints.createRoom(name);
+  }
+  // Mock
   await delay(500);
   return {
     ...mockRoom,
@@ -165,6 +169,10 @@ export async function createRoom(name: string): Promise<Room> {
  * 백엔드 연동 시: POST /rooms/join
  */
 export async function joinRoom(code: string): Promise<Room> {
+  if (USE_REAL_ROOM) {
+    return await endpoints.joinRoom(code);
+  }
+  // Mock
   await delay(500);
   return mockRoom;
 }
@@ -174,6 +182,10 @@ export async function joinRoom(code: string): Promise<Room> {
  * 백엔드 연동 시: GET /rooms/my
  */
 export async function getMyRoom(): Promise<Room | null> {
+  if (USE_REAL_ROOM) {
+    return await endpoints.getMyRoom();
+  }
+  // Mock
   await delay(300);
   return mockRoom;
 }
@@ -183,6 +195,10 @@ export async function getMyRoom(): Promise<Room | null> {
  * 백엔드 연동 시: GET /rooms/:roomId/members
  */
 export async function getRoomMembers(roomId: string): Promise<User[]> {
+  if (USE_REAL_ROOM) {
+    return await endpoints.getRoomMembers(roomId);
+  }
+  // Mock
   await delay(300);
   return mockUsers;
 }

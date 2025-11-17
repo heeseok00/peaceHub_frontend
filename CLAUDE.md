@@ -305,7 +305,7 @@ useEffect(() => {
 - **Phase 4 (Completed):** Backend integration preparation complete
 - **Phase 5 (In Progress):** Backend API integration
   - ✅ Phase 1-2: Authentication & User Profile (완료)
-  - 🔄 Phase 3: Room 생성/참여 (예정)
+  - ✅ Phase 3: Room 생성/참여 (완료)
   - ⏳ Phase 4-7: Schedule, Preferences, Assignments (예정)
 
 ### Code Refactoring Achievements (Latest)
@@ -319,7 +319,7 @@ useEffect(() => {
 
 ### Backend Integration Status
 
-**✅ Integrated APIs (Phase 1-2 Complete):**
+**✅ Integrated APIs (Phase 1-3 Complete):**
 
 - **Authentication**
   - ✅ Google OAuth login (`GET /api/auth/google`)
@@ -328,8 +328,14 @@ useEffect(() => {
 
 - **User Profile**
   - ✅ Get current user (`GET /api/users`)
-  - 🔄 Update profile (`PUT /api/users`) - Backend in progress
+  - 🔄 Update profile (`PUT /api/users`) - Mock mode (백엔드 작업 대기 중)
   - ✅ localStorage for `country`, `language` (temporary)
+
+- **Room**
+  - ✅ Create room (`POST /api/rooms`)
+  - ✅ Join room (`POST /api/rooms/join`)
+  - ✅ Get my room (`GET /api/rooms/my`)
+  - ✅ Get room members (`GET /api/rooms/:id/members`)
 
 - **CORS & Session**
   - ✅ CORS configured (`credentials: true`)
@@ -338,16 +344,15 @@ useEffect(() => {
 
 **Environment Variables:**
 ```env
-# .env.local
+# .env.local (Phase 3 완료 - Room 통합)
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
 NEXT_PUBLIC_USE_REAL_AUTH=true
-NEXT_PUBLIC_USE_REAL_USER=true
-NEXT_PUBLIC_USE_REAL_ROOM=false
+NEXT_PUBLIC_USE_REAL_USER=false
+NEXT_PUBLIC_USE_REAL_ROOM=true
 NEXT_PUBLIC_USE_REAL_SCHEDULE=false
 ```
 
 **⏳ Pending APIs:**
-- Room: `POST /api/rooms`, `POST /api/rooms/join`, `GET /api/rooms/:id/members`
 - Schedule: `POST /api/schedules`, `GET /api/schedules`
 - Preferences: CRUD endpoints
 - Assignments: Query endpoints
