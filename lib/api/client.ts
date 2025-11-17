@@ -54,7 +54,7 @@ export async function getGoogleAuthUrl(): Promise<string> {
     return `${BASE_URL}/auth/google`;
   }
   // Mock: 온보딩 프로필 페이지로 직접 이동
-  return '/onboarding/profile';
+  //return '/onboarding/profile';
 }
 
 /**

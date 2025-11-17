@@ -302,8 +302,11 @@ useEffect(() => {
 - **Phase 1 (Completed):** Login, Profile, Join-Room, Schedule onboarding pages
 - **Phase 2 (Completed):** Dashboard, Assign, Schedule, Result pages with full UI
 - **Phase 3 (Completed):** Frontend optimization & refactoring for backend integration
-- **Phase 4 (Ready):** Backend integration preparation complete
-- **Backend:** Not implemented yet (all API calls are mocked, but real API structure ready)
+- **Phase 4 (Completed):** Backend integration preparation complete
+- **Phase 5 (In Progress):** Backend API integration
+  - ✅ Phase 1-2: Authentication & User Profile (완료)
+  - 🔄 Phase 3: Room 생성/참여 (예정)
+  - ⏳ Phase 4-7: Schedule, Preferences, Assignments (예정)
 
 ### Code Refactoring Achievements (Latest)
 
@@ -314,27 +317,54 @@ useEffect(() => {
 - ✅ **Component reusability maximized** (LoadingSpinner, PageContainer, EmptyState)
 - ✅ **Backend types prepared** (types/api.ts, apiTransformers.ts)
 
-### Backend Integration Readiness
+### Backend Integration Status
 
-**When connecting to backend:**
+**✅ Integrated APIs (Phase 1-2 Complete):**
 
-1. Set `USE_MOCK_API=false` environment variable
-2. Update `lib/api/endpoints.ts` with real API base URL
-3. Use existing `apiTransformers.ts` for data format conversion
-4. Frontend types (types/index.ts) remain unchanged
-5. Backend types (types/api.ts) already match backend spec
+- **Authentication**
+  - ✅ Google OAuth login (`GET /api/auth/google`)
+  - ✅ OAuth callback with session/cookie
+  - ✅ Auto-redirect to `/auth/callback` → `/onboarding/profile`
+
+- **User Profile**
+  - ✅ Get current user (`GET /api/users`)
+  - 🔄 Update profile (`PUT /api/users`) - Backend in progress
+  - ✅ localStorage for `country`, `language` (temporary)
+
+- **CORS & Session**
+  - ✅ CORS configured (`credentials: true`)
+  - ✅ Session cookies working (`connect.sid`)
+  - ✅ Real API mode enabled
+
+**Environment Variables:**
+```env
+# .env.local
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
+NEXT_PUBLIC_USE_REAL_AUTH=true
+NEXT_PUBLIC_USE_REAL_USER=true
+NEXT_PUBLIC_USE_REAL_ROOM=false
+NEXT_PUBLIC_USE_REAL_SCHEDULE=false
+```
+
+**⏳ Pending APIs:**
+- Room: `POST /api/rooms`, `POST /api/rooms/join`, `GET /api/rooms/:id/members`
+- Schedule: `POST /api/schedules`, `GET /api/schedules`
+- Preferences: CRUD endpoints
+- Assignments: Query endpoints
 
 **Data format differences handled by transformers:**
 - DayOfWeek: 'mon' (frontend) ↔ 'MONDAY' (backend)
 - TimeSlot: 'quiet' ↔ 'QUIET', 'out' ↔ 'BUSY'
 - Time: hours (0-23) ↔ minutes from midnight (0-1439)
+- User fields: `realName` (frontend) ↔ `name` (backend)
 
 ### Authentication Status
 
-- Login page exists but **does not enforce authentication**
-- Google OAuth is mocked (button redirects to onboarding)
-- No protected routes or middleware yet
-- Will need auth middleware when backend is connected
+- ✅ **Google OAuth integrated** with real backend
+- ✅ **Session-based authentication** working (connect.sid cookie)
+- ✅ **Protected routes** via `checkAuth` middleware (backend)
+- ✅ **401 auto-redirect** to login page
+- ⚠️ Frontend route protection not implemented (optional for SPA)
 
 ### Client vs Server Components
 
@@ -357,8 +387,11 @@ useEffect(() => {
 - Build command: `npm run build`
 - Output directory: `.next/` (default)
 - Environment variables:
-  - `NEXT_PUBLIC_API_BASE_URL` - Backend API URL
-  - `USE_MOCK_API` - Toggle mock/real API (optional)
+  - `NEXT_PUBLIC_API_BASE_URL` - Backend API URL (required)
+  - `NEXT_PUBLIC_USE_REAL_AUTH` - Enable real auth (default: false)
+  - `NEXT_PUBLIC_USE_REAL_USER` - Enable real user API (default: false)
+  - `NEXT_PUBLIC_USE_REAL_ROOM` - Enable real room API (default: false)
+  - `NEXT_PUBLIC_USE_REAL_SCHEDULE` - Enable real schedule API (default: false)
 
 ## Best Practices & Guidelines
 
