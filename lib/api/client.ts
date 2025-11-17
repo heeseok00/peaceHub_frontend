@@ -28,9 +28,16 @@ import {
   mockAllSchedules,
   TASKS,
 } from './mockData';
+import * as endpoints from './endpoints';
 
-// 백엔드 API URL (나중에 환경 변수로 관리)
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// 백엔드 API URL
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api';
+
+// Feature flags for progressive integration
+const USE_REAL_AUTH = process.env.NEXT_PUBLIC_USE_REAL_AUTH === 'true';
+const USE_REAL_USER = process.env.NEXT_PUBLIC_USE_REAL_USER === 'true';
+const USE_REAL_ROOM = process.env.NEXT_PUBLIC_USE_REAL_ROOM === 'true';
+const USE_REAL_SCHEDULE = process.env.NEXT_PUBLIC_USE_REAL_SCHEDULE === 'true';
 
 // ============================================
 // 인증 관련 API
@@ -41,15 +48,30 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
  * 백엔드 연동 시: GET /auth/google
  */
 export async function getGoogleAuthUrl(): Promise<string> {
-  // 더미: 실제로는 백엔드에서 Google OAuth URL을 받아옴
-  return `${BASE_URL}/auth/google`;
+  if (USE_REAL_AUTH) {
+    // 실제 백엔드 OAuth URL
+    return `${BASE_URL}/auth/google`;
+  }
+  // Mock: 온보딩 프로필 페이지로 직접 이동
+  return '/onboarding/profile';
 }
 
 /**
  * 현재 로그인한 사용자 정보 가져오기
- * 백엔드 연동 시: GET /auth/me (쿠키/세션 기반)
+ * 백엔드 연동 시: GET /users (쿠키/세션 기반)
  */
 export async function getCurrentUser(): Promise<User | null> {
+  if (USE_REAL_USER) {
+    try {
+      return await endpoints.getCurrentUser();
+    } catch (error) {
+      if (error instanceof Error && error.message === 'need login') {
+        return null;
+      }
+      throw error;
+    }
+  }
+  // Mock
   await delay(300);
   return currentUser;
 }
@@ -59,6 +81,11 @@ export async function getCurrentUser(): Promise<User | null> {
  * 백엔드 연동 시: POST /auth/logout
  */
 export async function logout(): Promise<void> {
+  if (USE_REAL_AUTH) {
+    await endpoints.logout();
+    return;
+  }
+  // Mock
   await delay(300);
   // 쿠키 삭제 등
 }

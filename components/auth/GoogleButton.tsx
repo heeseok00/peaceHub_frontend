@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { getGoogleAuthUrl } from '@/lib/api/client';
 
 /**
  * Google 로그인 버튼 컴포넌트
@@ -14,13 +15,13 @@ interface GoogleButtonProps {
 }
 
 export default function GoogleButton({ onClick }: GoogleButtonProps) {
-  const handleClick = () => {
+  const handleClick = async () => {
     if (onClick) {
       onClick();
     } else {
-      // 백엔드 연동 시: window.location.href = '/api/auth/google'
-      // 프로토타입에서는 프로필 설정 페이지로 이동
-      window.location.href = '/onboarding/profile';
+      // 환경 변수에 따라 실제 OAuth 또는 Mock 플로우 진행
+      const authUrl = await getGoogleAuthUrl();
+      window.location.href = authUrl;
     }
   };
 
