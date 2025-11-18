@@ -336,7 +336,7 @@ useEffect(() => {
   - ✅ Create room (`POST /api/rooms`)
   - ✅ Join room (`POST /api/rooms/join`)
   - ✅ Get my room (`GET /api/rooms/my`)
-  - ✅ Get room members (`GET /api/rooms/:id/members`)
+  - 🔄 Get room members (`GET /api/rooms/:id/members`) - Mock mode (백엔드 미구현)
 
 - **Schedule**
   - ✅ Get my schedule (`GET /api/schedules`)
@@ -359,9 +359,23 @@ NEXT_PUBLIC_USE_REAL_ROOM=true
 NEXT_PUBLIC_USE_REAL_SCHEDULE=true
 ```
 
-**⏳ Pending APIs:**
-- Preferences: CRUD endpoints
-- Assignments: Query endpoints
+**⏳ Pending APIs (백엔드 미구현):**
+
+- **User Profile**
+  - `PUT /api/users` - 프로필 업데이트 (country, language 필드 추가 필요)
+
+- **Room**
+  - `GET /api/rooms/:id/members` - 방 멤버 목록 조회
+
+- **Preferences**
+  - `GET /api/preferences` - 내 선호도 조회
+  - `POST /api/preferences` - 선호도 저장
+  - `GET /api/preferences/all` - 룸 전체 선호도 조회
+
+- **Assignments**
+  - `GET /api/assignments/current` - 현재 주차 배정
+  - `GET /api/assignments?weekStart=YYYY-MM-DD` - 특정 주차 배정
+  - `GET /api/assignments/my` - 내 배정 내역
 
 **Data format differences handled by transformers:**
 - DayOfWeek: 'mon' (frontend) ↔ 'MONDAY' (backend)

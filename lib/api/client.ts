@@ -193,12 +193,10 @@ export async function getMyRoom(): Promise<Room | null> {
 /**
  * 방 멤버 목록 가져오기
  * 백엔드 연동 시: GET /rooms/:roomId/members
+ * TODO: 백엔드 API 미구현 - Mock 사용 중
  */
 export async function getRoomMembers(roomId: string): Promise<User[]> {
-  if (USE_REAL_ROOM) {
-    return await endpoints.getRoomMembers(roomId);
-  }
-  // Mock
+  // 백엔드 API 미구현으로 임시 Mock 사용
   await delay(300);
   return mockUsers;
 }
