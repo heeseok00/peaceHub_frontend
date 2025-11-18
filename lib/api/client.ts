@@ -115,22 +115,26 @@ export async function updateProfile(data: {
   country: string;
   language: string;
 }): Promise<User> {
+  // country, language 고정값 사용 (Mock)
+  const fixedCountry = '대한민국';
+  const fixedLanguage = '한국어';
+
   if (USE_REAL_USER) {
     try {
       // 백엔드에 realName만 업데이트 (country, language는 아직 미지원)
       const user = await endpoints.updateProfile(data);
 
-      // country, language는 localStorage에 저장
+      // country, language는 localStorage에 고정값으로 저장
       saveUserLocalData(user.id, {
-        country: data.country,
-        language: data.language,
+        country: fixedCountry,
+        language: fixedLanguage,
       });
 
-      // 반환 시 localStorage 데이터 포함
+      // 반환 시 고정값 사용
       return {
         ...user,
-        country: data.country,
-        language: data.language,
+        country: fixedCountry,
+        language: fixedLanguage,
       };
     } catch (error) {
       console.error('Profile update failed (using fallback):', error);
@@ -139,15 +143,15 @@ export async function updateProfile(data: {
       const currentUserData = await getCurrentUser();
       if (currentUserData) {
         saveUserLocalData(currentUserData.id, {
-          country: data.country,
-          language: data.language,
+          country: fixedCountry,
+          language: fixedLanguage,
         });
 
         return {
           ...currentUserData,
           realName: data.realName,
-          country: data.country,
-          language: data.language,
+          country: fixedCountry,
+          language: fixedLanguage,
         };
       }
 

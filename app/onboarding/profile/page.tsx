@@ -24,8 +24,8 @@ export default function ProfilePage() {
 
   // 폼 상태
   const [realName, setRealName] = useState('');
-  const [country, setCountry] = useState('');
-  const [language, setLanguage] = useState('');
+  const [country, setCountry] = useState('대한민국'); // 고정값
+  const [language, setLanguage] = useState('한국어'); // 고정값
 
   // 에러 상태
   const [errors, setErrors] = useState<{
@@ -81,13 +81,7 @@ export default function ProfilePage() {
       newErrors.realName = '실명은 2자 이상 입력해주세요';
     }
 
-    if (!country) {
-      newErrors.country = '국가를 선택해주세요';
-    }
-
-    if (!language) {
-      newErrors.language = '언어를 선택해주세요';
-    }
+    // country, language는 고정값이므로 검사 불필요
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -169,29 +163,9 @@ export default function ProfilePage() {
               required
             />
 
-            {/* 국가 선택 */}
-            <Select
-              label="국가"
-              placeholder="국가를 선택해주세요"
-              options={countryOptions}
-              value={country}
-              onChange={setCountry}
-              error={errors.country}
-              fullWidth
-              required
-            />
-
-            {/* 언어 선택 */}
-            <Select
-              label="언어"
-              placeholder="언어를 선택해주세요"
-              options={languageOptions}
-              value={language}
-              onChange={setLanguage}
-              error={errors.language}
-              fullWidth
-              required
-            />
+            {/* 국가, 언어는 고정값 (대한민국, 한국어) - 숨김 처리 */}
+            <input type="hidden" value={country} />
+            <input type="hidden" value={language} />
 
             {/* 제출 버튼 */}
             <Button
