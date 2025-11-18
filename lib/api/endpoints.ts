@@ -173,15 +173,19 @@ export async function getCurrentUser(): Promise<User | null> {
 
 /**
  * 사용자 프로필 업데이트
- * PUT /api/users/ (구현되어 있다면)
+ * PUT /api/users/profile
  */
 export async function updateProfile(data: {
   realName: string;
   country: string;
   language: string;
 }): Promise<User> {
-  // TODO: 백엔드 API 엔드포인트 확인 필요
-  const response = await put<GetCurrentUserResponse>('/users', data);
+  // 백엔드는 name 필드만 지원 (country, language 미지원)
+  const requestBody = {
+    name: data.realName,
+  };
+
+  const response = await put<GetCurrentUserResponse>('/users/profile', requestBody);
 
   return {
     id: response.id,

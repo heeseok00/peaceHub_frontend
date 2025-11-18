@@ -329,8 +329,9 @@ useEffect(() => {
 
 - **User Profile**
   - ✅ Get current user (`GET /api/users`)
-  - 🔄 Update profile (`PUT /api/users`) - localStorage 사용 (백엔드 작업 대기 중)
+  - ✅ Update profile (`PUT /api/users/profile`) - name 필드만 Real API
   - ✅ User 조회는 Real API, country/language는 localStorage에서 병합
+  - 🔄 country, language 필드는 localStorage 사용 (백엔드 미지원)
 
 - **Room**
   - ✅ Create room (`POST /api/rooms`)
@@ -360,9 +361,6 @@ NEXT_PUBLIC_USE_REAL_SCHEDULE=true
 ```
 
 **⏳ Pending APIs (백엔드 미구현):**
-
-- **User Profile**
-  - `PUT /api/users` - 프로필 업데이트 (country, language 필드 추가 필요)
 
 - **Room**
   - `GET /api/rooms/my` - 내 방 정보 조회
