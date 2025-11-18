@@ -11,6 +11,7 @@ import {
   getRoomMembers,
   getCurrentAssignments,
   getAllSchedules,
+  getActiveSchedule,
 } from '@/lib/api/client';
 import { useApiData, useParallelApiData } from '@/hooks/useApiData';
 
@@ -38,7 +39,13 @@ export default function DashboardPage() {
   const users = (parallelData?.[1] as User[]) || [];
   const assignments = (parallelData?.[2] as Assignment[]) || [];
 
-  // 2. Fetch schedules once users are loaded
+  // 2. Fetch my active schedule (현재 주)
+  const { data: mySchedule, isLoading: isLoadingMySchedule, error: myScheduleError } = useApiData(
+    getActiveSchedule,
+    { autoFetch: !!currentUser }
+  );
+
+  // 3. Fetch all schedules once users are loaded (통합 타임라인용, Mock)
   const getAllSchedulesCallback = useCallback(async () => {
     if (!users || !Array.isArray(users) || users.length === 0) {
       return new Map<string, WeeklySchedule>();
@@ -52,8 +59,8 @@ export default function DashboardPage() {
     { autoFetch: !!users && Array.isArray(users) && users.length > 0 }
   );
 
-  const isLoading = isLoadingParallel || isLoadingSchedules;
-  const error = parallelError || schedulesError;
+  const isLoading = isLoadingParallel || isLoadingMySchedule || isLoadingSchedules;
+  const error = parallelError || myScheduleError || schedulesError;
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
@@ -75,8 +82,6 @@ export default function DashboardPage() {
       </div>
     );
   }
-
-  const mySchedule = allSchedules?.get(currentUser.id);
 
   return (
     <div className="page-container">

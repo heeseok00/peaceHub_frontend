@@ -50,7 +50,7 @@ The app supports both **mock** and **real** API modes:
 - Authentication: `getCurrentUser()`, `logout()`, `getGoogleAuthUrl()`
 - Profile: `updateProfile(data)`
 - Room: `createRoom()`, `joinRoom()`, `getMyRoom()`, `getRoomMembers()`
-- Schedule: `getMySchedule()`, `saveSchedule()`, `getAllSchedules()`
+- Schedule: `getActiveSchedule()`, `getTemporarySchedule()`, `saveSchedule()`, `getAllSchedules()`
 - Preferences: `getTasks()`, `getMyPreference()`, `savePreference()`
 - Assignments: `getCurrentAssignments()`, `getAssignmentsByWeek()`, `getMyAssignments()`
 
@@ -306,7 +306,9 @@ useEffect(() => {
 - **Phase 5 (In Progress):** Backend API integration
   - ✅ Phase 1-2: Authentication & User Profile (완료)
   - ✅ Phase 3: Room 생성/참여 (완료)
-  - ✅ Phase 4: Schedule 저장/조회 (완료) - **온보딩 연동 완료**
+  - ✅ Phase 4: Schedule 저장/조회 (완료) - **백엔드 대규모 업데이트 반영 완료**
+  - ✅ Active/Temporary 스케줄 분리 (완료)
+  - ✅ 타임라인 렌더링 개선 (시간별 칸 구분)
   - ⏳ Phase 5-7: Preferences, Assignments (예정)
 
 ### Code Refactoring Achievements (Latest)
@@ -317,6 +319,7 @@ useEffect(() => {
 - ✅ **Utility functions consolidated** (8 duplicate functions eliminated)
 - ✅ **Component reusability maximized** (LoadingSpinner, PageContainer, EmptyState)
 - ✅ **Backend types prepared** (types/api.ts, apiTransformers.ts)
+- ✅ **Backend integration optimized** (Active/Temporary schedule separation, hour-by-hour timeline rendering)
 
 ### Backend Integration Status
 
@@ -328,7 +331,7 @@ useEffect(() => {
   - ✅ Auto-redirect to `/auth/callback` → `/onboarding/profile`
 
 - **User Profile**
-  - ✅ Get current user (`GET /api/users`)
+  - ✅ Get current user (`GET /api/users/me`)
   - ✅ Update profile (`PUT /api/users/profile`) - name 필드만 Real API
   - ✅ User 조회는 Real API, country/language는 localStorage에서 병합
   - 🔄 country, language 필드는 localStorage 사용 (백엔드 미지원)
@@ -339,11 +342,15 @@ useEffect(() => {
   - 🔄 Get my room (`GET /api/rooms/my`) - Mock mode (백엔드 미구현)
   - 🔄 Get room members (`GET /api/rooms/:id/members`) - Mock mode (백엔드 미구현)
 
-- **Schedule**
-  - ✅ Get my schedule (`GET /api/schedules`)
-  - ✅ Save schedule (`POST /api/schedules`)
-  - 🔄 Get all schedules (`GET /api/schedules/all`) - Mock mode (백엔드 미구현)
+- **Schedule** (ScheduleStatus: ACTIVE/TEMPORARY 구분)
+  - ✅ Get active schedule (`GET /api/schedules/ActiveSchedules`) - 현재 주 스케줄
+  - ✅ Get temporary schedule (`GET /api/schedules/TemporarySchedules`) - 다음 주 스케줄
+  - ✅ Save schedule (`POST /api/schedules`) - 기본값: TEMPORARY
+  - 🔄 Get all schedules (전체 룸메이트) - Mock mode (백엔드 미구현)
   - ✅ Frontend ↔ Backend data transformation (TimeBlock conversion)
+  - ✅ ScheduleStatus 개념: ACTIVE (현재 주), TEMPORARY (다음 주)
+  - ✅ 스케줄러가 자동으로 TEMPORARY → ACTIVE 승격
+  - ✅ 타임라인 시간별 칸 구분 렌더링 (스케줄 에디터와 동일)
 
 - **CORS & Session**
   - ✅ CORS configured (`credentials: true`)

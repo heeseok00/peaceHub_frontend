@@ -141,14 +141,14 @@ export async function logout(): Promise<void> {
 
 /**
  * 현재 로그인한 사용자 정보 조회
- * GET /api/users/
+ * GET /api/users/me
  *
  * @returns User 객체 또는 null
  * @throws 401 Unauthorized - 로그인 필요
  */
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    const response = await get<GetCurrentUserResponse>('/users');
+    const response = await get<GetCurrentUserResponse>('/users/me');
 
     // Backend response → Frontend User 타입 변환
     return {
@@ -281,18 +281,46 @@ export async function getRoomMembers(roomId: string): Promise<User[]> {
 // ==================== Schedule ====================
 
 /**
- * 내 스케줄 조회
- * GET /api/schedules
+ * 현재 주 스케줄 조회 (ACTIVE)
+ * GET /api/schedules/ActiveSchedules
  */
-export async function getMySchedule(): Promise<WeeklySchedule> {
-  const response = await get<GetScheduleResponse>('/schedules');
+export async function getActiveSchedule(): Promise<WeeklySchedule> {
+  const response = await get<GetScheduleResponse>('/schedules/ActiveSchedules');
+
+  console.log('🔍 [ACTIVE] Backend Response (raw):', response);
+  console.log('🔍 [ACTIVE] Response type:', typeof response);
+  console.log('🔍 [ACTIVE] Is array:', Array.isArray(response));
+  console.log('🔍 [ACTIVE] Length:', Array.isArray(response) ? response.length : 'N/A');
 
   // Backend TimeBlock[] → Frontend WeeklySchedule 변환
-  return fromBackendSchedule(response);
+  const converted = fromBackendSchedule(response);
+  console.log('✅ [ACTIVE] Converted Schedule:', converted);
+  console.log('✅ [ACTIVE] Sample (mon):', converted.mon);
+
+  return converted;
 }
 
 /**
- * 스케줄 저장
+ * 다음 주 스케줄 조회 (TEMPORARY)
+ * GET /api/schedules/TemporarySchedules
+ */
+export async function getTemporarySchedule(): Promise<WeeklySchedule> {
+  const response = await get<GetScheduleResponse>('/schedules/TemporarySchedules');
+
+  console.log('🔍 Backend Response (raw):', response);
+  console.log('🔍 Response type:', typeof response);
+  console.log('🔍 Is array:', Array.isArray(response));
+  console.log('🔍 Length:', Array.isArray(response) ? response.length : 'N/A');
+
+  // Backend TimeBlock[] → Frontend WeeklySchedule 변환
+  const converted = fromBackendSchedule(response);
+  console.log('✅ Converted Schedule:', converted);
+
+  return converted;
+}
+
+/**
+ * 스케줄 저장 (기본값: TEMPORARY)
  * POST /api/schedules
  */
 export async function saveSchedule(schedule: WeeklySchedule): Promise<void> {
@@ -300,23 +328,6 @@ export async function saveSchedule(schedule: WeeklySchedule): Promise<void> {
   const requestData: PostScheduleRequest = toBackendSchedule(schedule);
 
   await post<void, PostScheduleRequest>('/schedules', requestData);
-}
-
-/**
- * 전체 스케줄 조회 (룸메이트 포함)
- * GET /api/schedules/all (구현되어 있다면)
- */
-export async function getAllSchedules(): Promise<Record<string, WeeklySchedule>> {
-  // TODO: 백엔드 API 엔드포인트 확인 필요
-  const response = await get<Record<string, GetScheduleResponse>>('/schedules/all');
-
-  // 각 사용자의 스케줄 변환
-  const schedules: Record<string, WeeklySchedule> = {};
-  for (const [userId, timeBlocks] of Object.entries(response)) {
-    schedules[userId] = fromBackendSchedule(timeBlocks);
-  }
-
-  return schedules;
 }
 
 // ==================== Preferences (TODO) ====================

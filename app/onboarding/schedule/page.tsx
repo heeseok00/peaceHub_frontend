@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import ScheduleEditor from '@/components/schedule/ScheduleEditor';
-import { saveSchedule, getMySchedule } from '@/lib/api/client';
+import { saveSchedule, getTemporarySchedule } from '@/lib/api/client';
 import type { WeeklySchedule, DayOfWeek, HourlySchedule } from '@/types';
 
 /**
@@ -36,7 +36,7 @@ export default function OnboardingSchedulePage() {
     const loadSchedule = async () => {
       setIsLoading(true);
       try {
-        const data = await getMySchedule();
+        const data = await getTemporarySchedule();
         setSchedule(data);
       } catch (error) {
         console.error('스케줄 로드 실패:', error);

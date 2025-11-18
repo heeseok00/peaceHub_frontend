@@ -187,6 +187,9 @@ export function toBackendSchedule(schedule: WeeklySchedule): BackendTimeBlock[] 
  * @returns Frontend WeeklySchedule
  */
 export function fromBackendSchedule(blocks: BackendTimeBlock[]): WeeklySchedule {
+  const days: DayOfWeek[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+  // 모든 요일, 모든 시간을 null(TASK)로 초기화
   const schedule: WeeklySchedule = {
     mon: {},
     tue: {},
@@ -197,6 +200,14 @@ export function fromBackendSchedule(blocks: BackendTimeBlock[]): WeeklySchedule 
     sun: {},
   };
 
+  // 각 요일의 24시간을 null로 초기화
+  days.forEach((day) => {
+    for (let hour = 0; hour < 24; hour++) {
+      schedule[day][hour] = null;
+    }
+  });
+
+  // 백엔드 데이터로 덮어쓰기
   blocks.forEach((block) => {
     const day = fromBackendDay(block.dayOfWeek);
     const slot = fromBackendTimeSlot(block.type);

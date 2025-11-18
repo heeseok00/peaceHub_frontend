@@ -225,12 +225,12 @@ export async function getRoomMembers(roomId: string): Promise<User[]> {
 // ============================================
 
 /**
- * 주간 스케줄 가져오기
- * 백엔드 연동 시: GET /schedules/my
+ * 현재 주 스케줄 가져오기 (ACTIVE)
+ * 백엔드 연동 시: GET /ActiveSchedules
  */
-export async function getMySchedule(): Promise<WeeklySchedule> {
+export async function getActiveSchedule(): Promise<WeeklySchedule> {
   if (USE_REAL_SCHEDULE) {
-    return await endpoints.getMySchedule();
+    return await endpoints.getActiveSchedule();
   }
   // Mock
   await delay(300);
@@ -238,14 +238,27 @@ export async function getMySchedule(): Promise<WeeklySchedule> {
 }
 
 /**
- * 주간 스케줄 저장
- * 백엔드 연동 시: PUT /schedules/my
+ * 다음 주 스케줄 가져오기 (TEMPORARY)
+ * 백엔드 연동 시: GET /TemporarySchedules
+ */
+export async function getTemporarySchedule(): Promise<WeeklySchedule> {
+  if (USE_REAL_SCHEDULE) {
+    return await endpoints.getTemporarySchedule();
+  }
+  // Mock
+  await delay(300);
+  return mockWeeklySchedule;
+}
+
+/**
+ * 스케줄 저장 (기본값: TEMPORARY)
+ * 백엔드 연동 시: POST /schedules
  */
 export async function saveSchedule(schedule: WeeklySchedule): Promise<void> {
   if (USE_REAL_SCHEDULE) {
     return await endpoints.saveSchedule(schedule);
   }
-  // Mock: 실제로는 백엔드에 저장
+  // Mock
   await delay(500);
 }
 

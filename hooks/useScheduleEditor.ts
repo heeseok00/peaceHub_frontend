@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { WeeklySchedule } from '@/types';
-import { getMySchedule, saveSchedule } from '@/lib/api/client';
+import { getTemporarySchedule, saveSchedule } from '@/lib/api/client';
 import { createEmptySchedule } from '@/lib/utils/scheduleHelpers';
 import { useApiData } from './useApiData';
 
@@ -110,9 +110,9 @@ export function useScheduleEditor(options: UseScheduleEditorOptions): UseSchedul
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // API로부터 스케줄 로드
+  // API로부터 스케줄 로드 (TEMPORARY - 다음 주 스케줄)
   const { data: schedule, isLoading, setData: setSchedule, refetch } = useApiData(
-    getMySchedule,
+    getTemporarySchedule,
     {
       onError: (error) => {
         console.error('스케줄 로드 실패:', error);

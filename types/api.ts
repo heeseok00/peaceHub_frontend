@@ -97,10 +97,13 @@ export interface JoinRoomRequest {
  *   예) 오전 9시 = 540분, 오후 4시 = 960분
  */
 export interface BackendTimeBlock {
+  id?: string; // 백엔드에서 제공하는 ID (선택적)
   dayOfWeek: BackendDayOfWeek;
   type: BackendTimeBlockType;
   startTime: number; // 분 단위 (0-1439)
   endTime: number; // 분 단위 (0-1439)
+  status?: 'ACTIVE' | 'TEMPORARY'; // 스케줄 상태 (선택적)
+  userId?: string; // 사용자 ID (선택적)
 }
 
 /**

@@ -33,14 +33,12 @@ export default function TimelineBar({
   const userAssignments = assignments.filter((a) => a.userId === userId);
   const hasTaskToday = userAssignments.some((a) => a.days.includes(dayOfWeek));
 
-  // 타임라인 블록 생성
+  // 타임라인 블록 생성 (시간별 칸 구분)
   const createTimelineBlocks = (): TimelineBlock[] => {
     const blocks: TimelineBlock[] = [];
     const daySchedule = schedule[dayOfWeek];
 
-    let currentType: 'quiet' | 'out' | 'task' | null = null;
-    let startHour = 0;
-
+    // 각 시간을 별도의 블록으로 생성 (병합하지 않음)
     for (let hour = 0; hour < 24; hour++) {
       const slotType = daySchedule?.[hour];
 
@@ -52,29 +50,12 @@ export default function TimelineBar({
         type = 'task';
       }
 
-      // 블록 병합 로직
-      if (currentType === null) {
-        currentType = type;
-        startHour = hour;
-      } else if (type !== currentType) {
-        blocks.push({
-          startHour,
-          endHour: hour,
-          type: currentType,
-          tooltip: `${startHour}시 - ${currentType || '비는 시간'}`,
-        });
-        currentType = type;
-        startHour = hour;
-      }
-    }
-
-    // 마지막 블록
-    if (currentType !== null) {
+      // 각 시간을 개별 블록으로 추가
       blocks.push({
-        startHour,
-        endHour: 24,
-        type: currentType,
-        tooltip: `${startHour}시 - ${currentType || '비는 시간'}`,
+        startHour: hour,
+        endHour: hour + 1,
+        type: type,
+        tooltip: `${hour}시 - ${type === 'quiet' ? '조용시간' : type === 'out' ? '외출' : type === 'task' ? '배정된 업무' : '업무 가능 시간'}`,
       });
     }
 
@@ -110,8 +91,8 @@ export default function TimelineBar({
           items={[
             { color: 'time-slot-quiet', label: '조용시간' },
             { color: 'time-slot-out', label: '외출' },
-            { color: 'time-slot-task', label: '업무' },
-            { color: 'time-slot-free', label: '비는 시간', border: true },
+            { color: 'time-slot-task', label: '배정된 업무' },
+            { color: 'time-slot-free', label: '업무 가능 시간', border: true },
           ]}
         />
       </div>

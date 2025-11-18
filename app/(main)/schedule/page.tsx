@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Button from '@/components/ui/Button';
 import ScheduleEditor from '@/components/schedule/ScheduleEditor';
 import { MainLoadingSpinner } from '@/components/common/LoadingSpinner';
-import { saveSchedule, getMySchedule } from '@/lib/api/client';
+import { saveSchedule, getTemporarySchedule } from '@/lib/api/client';
 import { createEmptySchedule } from '@/lib/utils/scheduleHelpers';
 import type { WeeklySchedule } from '@/types';
 
@@ -17,7 +17,7 @@ export default function MainSchedulePage() {
     const loadSchedule = async () => {
       setIsLoading(true);
       try {
-        const data = await getMySchedule();
+        const data = await getTemporarySchedule();
         setSchedule(data);
       } catch (error) {
         console.error('스케줄 로드 실패:', error);
