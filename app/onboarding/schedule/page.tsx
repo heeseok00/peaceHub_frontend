@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import ScheduleEditor from '@/components/schedule/ScheduleEditor';
 import { saveSchedule, getTemporarySchedule } from '@/lib/api/client';
+import { getWeekStart } from '@/lib/utils/dateHelpers';
 import type { WeeklySchedule, DayOfWeek, HourlySchedule } from '@/types';
 
 /**
@@ -50,13 +51,15 @@ export default function OnboardingSchedulePage() {
 
   /**
    * 저장 및 다음 단계로 이동
+   * 온보딩은 현재 주 스케줄(ACTIVE)로 저장됨
    */
   const handleSubmit = async () => {
     if (!schedule) return;
 
     setIsSubmitting(true);
     try {
-      await saveSchedule(schedule);
+      const weekStart = getWeekStart(new Date()); // 현재 주 월요일
+      await saveSchedule(schedule, weekStart);
       router.push('/dashboard');
     } catch (error) {
       console.error('스케줄 저장 실패:', error);

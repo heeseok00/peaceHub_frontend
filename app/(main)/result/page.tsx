@@ -3,12 +3,8 @@
 import { useState, useEffect } from 'react';
 import Card from '@/components/ui/Card';
 import { MainLoadingSpinner } from '@/components/common/LoadingSpinner';
-import {
-  mockUsers,
-  mockAssignments,
-  TASKS,
-} from '@/lib/api/mockData';
-import { DAY_NAMES } from '@/types';
+import { getCurrentUser, getRoomMembers, getCurrentAssignments } from '@/lib/api/client';
+import { DAY_NAMES, TASKS } from '@/types';
 import { TASK_EMOJIS, formatTimeRange } from '@/lib/constants/tasks';
 import type { Assignment, DayOfWeek, TimeRange } from '@/types';
 
@@ -39,51 +35,73 @@ export default function ResultPage() {
   const [totalTasks, setTotalTasks] = useState(0);
 
   useEffect(() => {
-    // For prototype, we'll find the most recent week from mock data
-    const mostRecentWeekStart = mockAssignments.reduce((latest, assign) => {
-      return latest > assign.weekStart ? latest : assign.weekStart;
-    }, '');
+    const loadAssignmentData = async () => {
+      try {
+        setIsLoading(true);
 
-    const weekStart = new Date(mostRecentWeekStart);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
-
-    const formatDate = (d: Date) => `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
-    setWeek({ start: formatDate(weekStart), end: formatDate(weekEnd) });
-
-    const currentWeekAssignments = mockAssignments.filter(
-      (a) => a.weekStart === mostRecentWeekStart
-    );
-
-    setTotalTasks(currentWeekAssignments.length);
-
-    const groupedAssignments: { [userId: string]: UserAssignment } = {};
-
-    mockUsers.forEach((user) => {
-      groupedAssignments[user.id] = {
-        userId: user.id,
-        userName: user.realName,
-        profileImage: user.profileImage,
-        tasks: [],
-      };
-    });
-
-    currentWeekAssignments.forEach((assignment) => {
-      if (groupedAssignments[assignment.userId]) {
-        const task = TASKS.find((t) => t.id === assignment.taskId);
-        if (task) {
-          groupedAssignments[assignment.userId].tasks.push({
-            taskId: task.id,
-            taskName: task.name,
-            days: assignment.days,
-            timeRange: assignment.timeRange,
-          });
+        // 1. Get current user to retrieve roomId
+        const user = await getCurrentUser();
+        if (!user || !user.roomId) {
+          console.error('User or roomId not found');
+          setIsLoading(false);
+          return;
         }
-      }
-    });
 
-    setAssignmentsByUser(Object.values(groupedAssignments));
-    setIsLoading(false);
+        // 2. Fetch room members and current assignments in parallel
+        const [members, assignments] = await Promise.all([
+          getRoomMembers(user.roomId),
+          getCurrentAssignments(),
+        ]);
+
+        // 3. Calculate week start/end from assignments
+        if (assignments.length > 0) {
+          const weekStartStr = assignments[0].weekStart;
+          const weekStart = new Date(weekStartStr);
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekStart.getDate() + 6);
+
+          const formatDate = (d: Date) =>
+            `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+          setWeek({ start: formatDate(weekStart), end: formatDate(weekEnd) });
+        }
+
+        setTotalTasks(assignments.length);
+
+        // 4. Group assignments by user
+        const groupedAssignments: { [userId: string]: UserAssignment } = {};
+
+        members.forEach((member) => {
+          groupedAssignments[member.id] = {
+            userId: member.id,
+            userName: member.realName,
+            profileImage: member.profileImage,
+            tasks: [],
+          };
+        });
+
+        assignments.forEach((assignment) => {
+          if (groupedAssignments[assignment.userId]) {
+            const task = TASKS.find((t) => t.id === assignment.taskId);
+            if (task) {
+              groupedAssignments[assignment.userId].tasks.push({
+                taskId: task.id,
+                taskName: task.name,
+                days: assignment.days,
+                timeRange: assignment.timeRange,
+              });
+            }
+          }
+        });
+
+        setAssignmentsByUser(Object.values(groupedAssignments));
+      } catch (error) {
+        console.error('Failed to load assignment data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAssignmentData();
   }, []);
 
   if (isLoading) {

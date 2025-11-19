@@ -42,6 +42,17 @@ const DEFAULT_FETCH_OPTIONS: RequestInit = {
 // ==================== Helper Functions ====================
 
 /**
+ * 로그인 페이지로 리디렉션
+ * 세션 만료 또는 인증 실패 시 사용
+ */
+function redirectToLogin(): never {
+  if (typeof window !== 'undefined') {
+    window.location.href = '/login';
+  }
+  throw new Error('need login');
+}
+
+/**
  * API 응답 처리 헬퍼
  * @param response Response 객체
  * @returns JSON 파싱된 데이터
@@ -51,10 +62,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     // 401 Unauthorized - 로그인 페이지로 강제 리디렉션
     if (response.status === 401) {
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-      }
-      throw new Error('need login');
+      redirectToLogin();
     }
 
     // 기타 에러 응답 처리
@@ -142,7 +150,7 @@ export async function logout(): Promise<void> {
   // await post('/auth/logout');
 
   // 프론트엔드 리디렉션
-  window.location.href = '/login';
+  redirectToLogin();
 }
 
 // ==================== User ====================
@@ -172,8 +180,7 @@ export async function getCurrentUser(): Promise<User | null> {
   } catch (error) {
     // 401 에러는 로그인 페이지로 리디렉션
     if (error instanceof Error && error.message.includes('need login')) {
-      window.location.href = '/login';
-      return null;
+      redirectToLogin();
     }
     throw error;
   }
@@ -295,15 +302,8 @@ export async function getRoomMembers(roomId: string): Promise<User[]> {
 export async function getActiveSchedule(): Promise<WeeklySchedule> {
   const response = await get<GetScheduleResponse>('/schedules/ActiveSchedules');
 
-  console.log('🔍 [ACTIVE] Backend Response (raw):', response);
-  console.log('🔍 [ACTIVE] Response type:', typeof response);
-  console.log('🔍 [ACTIVE] Is array:', Array.isArray(response));
-  console.log('🔍 [ACTIVE] Length:', Array.isArray(response) ? response.length : 'N/A');
-
   // Backend TimeBlock[] → Frontend WeeklySchedule 변환
   const converted = fromBackendSchedule(response);
-  console.log('✅ [ACTIVE] Converted Schedule:', converted);
-  console.log('✅ [ACTIVE] Sample (mon):', converted.mon);
 
   return converted;
 }
@@ -315,14 +315,8 @@ export async function getActiveSchedule(): Promise<WeeklySchedule> {
 export async function getTemporarySchedule(): Promise<WeeklySchedule> {
   const response = await get<GetScheduleResponse>('/schedules/TemporarySchedules');
 
-  console.log('🔍 Backend Response (raw):', response);
-  console.log('🔍 Response type:', typeof response);
-  console.log('🔍 Is array:', Array.isArray(response));
-  console.log('🔍 Length:', Array.isArray(response) ? response.length : 'N/A');
-
   // Backend TimeBlock[] → Frontend WeeklySchedule 변환
   const converted = fromBackendSchedule(response);
-  console.log('✅ Converted Schedule:', converted);
 
   return converted;
 }
@@ -330,10 +324,27 @@ export async function getTemporarySchedule(): Promise<WeeklySchedule> {
 /**
  * 스케줄 저장 (기본값: TEMPORARY)
  * POST /api/schedules
+ * @param schedule Frontend WeeklySchedule
+ * @param weekStart 해당 주의 월요일 날짜 (YYYY-MM-DD 형식)
  */
-export async function saveSchedule(schedule: WeeklySchedule): Promise<void> {
+export async function saveSchedule(schedule: WeeklySchedule, weekStart: string): Promise<void> {
   // Frontend WeeklySchedule → Backend TimeBlock[] 변환
-  const requestData: PostScheduleRequest = toBackendSchedule(schedule);
+  const requestData: PostScheduleRequest = toBackendSchedule(schedule, weekStart);
+
+  // 🔍 디버깅: 실제 전송 데이터 확인
+  console.log('=== 백엔드로 전송하는 데이터 ===');
+  console.log('weekStart:', weekStart);
+  console.log('총 블록 수:', requestData.length);
+  console.log('첫 3개 블록:', requestData.slice(0, 3));
+  console.log('마지막 3개 블록:', requestData.slice(-3));
+
+  // 날짜별 그룹화하여 확인
+  const byDate: { [key: string]: number } = {};
+  requestData.forEach(block => {
+    const date = block.startTime.split('T')[0];
+    byDate[date] = (byDate[date] || 0) + 1;
+  });
+  console.log('날짜별 블록 수:', byDate);
 
   await post<void, PostScheduleRequest>('/schedules', requestData);
 }

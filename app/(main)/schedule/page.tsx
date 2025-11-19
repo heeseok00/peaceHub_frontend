@@ -7,6 +7,7 @@ import ScheduleEditor from '@/components/schedule/ScheduleEditor';
 import { MainLoadingSpinner } from '@/components/common/LoadingSpinner';
 import { saveSchedule, getTemporarySchedule } from '@/lib/api/client';
 import { createEmptySchedule } from '@/lib/utils/scheduleHelpers';
+import { getNextWeekStart } from '@/lib/utils/dateHelpers';
 import type { WeeklySchedule } from '@/types';
 
 export default function MainSchedulePage() {
@@ -33,13 +34,15 @@ export default function MainSchedulePage() {
 
   /**
    * 변경사항 저장
+   * 메인 스케줄 페이지는 다음 주 스케줄(TEMPORARY)로 저장됨
    */
   const handleSaveChanges = async () => {
     if (!schedule) return;
 
     setIsSubmitting(true);
     try {
-      await saveSchedule(schedule);
+      const weekStart = getNextWeekStart(); // 다음 주 월요일
+      await saveSchedule(schedule, weekStart);
       alert('스케줄이 성공적으로 저장되었습니다.');
       router.push('/dashboard');
     } catch (error) {

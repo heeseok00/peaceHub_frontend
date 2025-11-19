@@ -137,3 +137,64 @@ export function formatTimeRemaining(deadline: Date): string {
 
   return parts.join(' ');
 }
+
+/**
+ * 다음 주의 시작일(월요일) 계산
+ * @param date 기준 날짜 (기본값: 오늘)
+ * @returns YYYY-MM-DD 형식의 다음 주 월요일 날짜 문자열
+ */
+export function getNextWeekStart(date: Date = new Date()): string {
+  const weekStart = getWeekStart(date);
+  const monday = new Date(weekStart + 'T00:00:00');
+  monday.setDate(monday.getDate() + 7);
+  return monday.toISOString().split('T')[0];
+}
+
+/**
+ * YYYY-MM-DD 날짜 문자열과 시간(hour)을 ISO timestamp로 변환
+ *
+ * 주의: 로컬 시간을 그대로 UTC 형식으로 표현합니다.
+ * 예) dateStr="2025-11-24", hour=9 → "2025-11-24T09:00:00.000Z"
+ *
+ * @param dateStr YYYY-MM-DD 형식 날짜
+ * @param hour 시간 (0-23, 24는 다음 날 00시)
+ * @returns ISO 8601 timestamp (UTC 형식)
+ */
+export function toISOTimestamp(dateStr: string, hour: number): string {
+  // 24시는 다음 날 00시로 처리
+  if (hour === 24) {
+    const nextDate = new Date(dateStr + 'T00:00:00');
+    nextDate.setDate(nextDate.getDate() + 1);
+    return nextDate.toISOString().split('T')[0] + 'T00:00:00.000Z';
+  }
+
+  const hourStr = hour.toString().padStart(2, '0');
+  return `${dateStr}T${hourStr}:00:00.000Z`;
+}
+
+/**
+ * ISO timestamp에서 시간(hour) 추출
+ *
+ * UTC 시간을 그대로 추출합니다 (타임존 변환 없음).
+ *
+ * @param isoTimestamp ISO 8601 형식 문자열
+ * @returns 시간 (0-23)
+ */
+export function hourFromISOTimestamp(isoTimestamp: string): number {
+  // "2025-11-24T09:00:00.000Z" → 09
+  const timePart = isoTimestamp.split('T')[1];
+  const hour = parseInt(timePart.split(':')[0], 10);
+  return hour;
+}
+
+/**
+ * YYYY-MM-DD 날짜 문자열에 일수를 더함
+ * @param dateStr YYYY-MM-DD 형식 날짜
+ * @param days 더할 일수
+ * @returns YYYY-MM-DD 형식의 새 날짜 문자열
+ */
+export function addDaysToDateString(dateStr: string, days: number): string {
+  const date = new Date(dateStr + 'T00:00:00');
+  date.setDate(date.getDate() + days);
+  return date.toISOString().split('T')[0];
+}

@@ -580,6 +580,3 @@ export const mockAssignments: Assignment[] = [
     createdAt: '2025-01-27T03:00:00Z',
   },
 ];
-
-// Export TASKS for convenience
-export { TASKS };

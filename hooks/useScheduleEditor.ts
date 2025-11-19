@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { WeeklySchedule } from '@/types';
 import { getTemporarySchedule, saveSchedule } from '@/lib/api/client';
 import { createEmptySchedule } from '@/lib/utils/scheduleHelpers';
+import { getWeekStart, getNextWeekStart } from '@/lib/utils/dateHelpers';
 import { useApiData } from './useApiData';
 
 export type ScheduleEditorMode = 'onboarding' | 'edit';
@@ -126,6 +127,8 @@ export function useScheduleEditor(options: UseScheduleEditorOptions): UseSchedul
 
   /**
    * 스케줄 저장 및 다음 단계로 이동
+   * - onboarding 모드: 현재 주 월요일 (ACTIVE 스케줄)
+   * - edit 모드: 다음 주 월요일 (TEMPORARY 스케줄)
    */
   const handleSubmit = useCallback(async () => {
     if (!schedule) {
@@ -135,7 +138,12 @@ export function useScheduleEditor(options: UseScheduleEditorOptions): UseSchedul
 
     setIsSubmitting(true);
     try {
-      await saveSchedule(schedule);
+      // 모드에 따라 적절한 주차 계산
+      const weekStart = mode === 'onboarding'
+        ? getWeekStart(new Date())  // 현재 주 월요일
+        : getNextWeekStart();        // 다음 주 월요일
+
+      await saveSchedule(schedule, weekStart);
       onSaveSuccess?.();
 
       // 저장 성공 후 페이지 이동
@@ -148,7 +156,7 @@ export function useScheduleEditor(options: UseScheduleEditorOptions): UseSchedul
     } finally {
       setIsSubmitting(false);
     }
-  }, [schedule, router, redirectPath, onSaveSuccess, onSaveError]);
+  }, [schedule, mode, router, redirectPath, onSaveSuccess, onSaveError]);
 
   /**
    * 건너뛰기 (온보딩 모드에서만 사용)

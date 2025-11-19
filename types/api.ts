@@ -24,7 +24,7 @@ export type BackendDayOfWeek =
 /**
  * 백엔드 타임 블록 타입
  */
-export type BackendTimeBlockType = 'QUIET' | 'BUSY' | 'TASK';
+export type BackendTimeBlockType = 'QUIET' | 'BUSY' | 'TASK' | 'FREE';
 
 // ==================== Authentication ====================
 
@@ -92,18 +92,26 @@ export interface JoinRoomRequest {
  *
  * 주간 스케줄은 타임 블록의 배열로 표현됩니다.
  * - dayOfWeek: 요일 (대문자)
- * - type: 블록 타입 (QUIET, BUSY, TASK)
- * - startTime, endTime: 00:00 기준 분 단위 (0-1439)
- *   예) 오전 9시 = 540분, 오후 4시 = 960분
+ * - type: 블록 타입 (QUIET, BUSY, TASK, FREE)
+ * - startTime, endTime: ISO 8601 timestamp (날짜 포함)
+ *   예) "2025-11-24T09:00:00.000Z"
+ *
+ * 주의: API 문서는 startDateTime/endDateTime이라고 하지만,
+ *       실제 백엔드 구현은 startTime/endTime을 사용합니다.
  */
 export interface BackendTimeBlock {
-  id?: string; // 백엔드에서 제공하는 ID (선택적)
+  id?: string; // 백엔드에서 제공하는 ID (응답 시)
   dayOfWeek: BackendDayOfWeek;
   type: BackendTimeBlockType;
-  startTime: number; // 분 단위 (0-1439)
-  endTime: number; // 분 단위 (0-1439)
-  status?: 'ACTIVE' | 'TEMPORARY'; // 스케줄 상태 (선택적)
-  userId?: string; // 사용자 ID (선택적)
+  startTime: string; // ISO 8601 timestamp (필드명 주의!)
+  endTime: string; // ISO 8601 timestamp (필드명 주의!)
+  status?: 'ACTIVE' | 'TEMPORARY'; // 스케줄 상태 (응답 시)
+  userId?: string; // 사용자 ID (응답 시)
+  roomTaskId?: string; // TASK 타입일 경우 업무 ID (응답 시)
+  roomTask?: {
+    title: string; // 업무 이름
+  }; // TASK 타입일 경우 업무 정보 (응답 시)
+  difficulty?: number; // TASK 타입일 경우 난이도 (응답 시)
 }
 
 /**

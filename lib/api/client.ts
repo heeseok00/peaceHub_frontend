@@ -18,6 +18,7 @@ import type {
   Assignment,
   Task
 } from '@/types';
+import { TASKS } from '@/types';
 import {
   currentUser,
   mockUsers,
@@ -26,7 +27,6 @@ import {
   mockPreferences,
   mockAssignments,
   mockAllSchedules,
-  TASKS,
 } from './mockData';
 import * as endpoints from './endpoints';
 import { saveUserLocalData, getUserLocalData } from '@/lib/utils/userStorage';
@@ -178,8 +178,14 @@ export async function joinRoom(code: string): Promise<Room> {
 /**
  * 내 방 정보 가져오기
  * 백엔드 연동 시: GET /rooms/my
+ *
+ * ⚠️ 임시: 백엔드 미구현으로 항상 Mock 사용
  */
 export async function getMyRoom(): Promise<Room | null> {
+  // TODO: 백엔드 구현 후 USE_REAL_ROOM 플래그 적용
+  // if (USE_REAL_ROOM) {
+  //   return await endpoints.getMyRoom();
+  // }
   await delay(300);
   return mockRoom;
 }
@@ -187,8 +193,14 @@ export async function getMyRoom(): Promise<Room | null> {
 /**
  * 방 멤버 목록 가져오기
  * 백엔드 연동 시: GET /rooms/:roomId/members
+ *
+ * ⚠️ 임시: 백엔드 미구현으로 항상 Mock 사용
  */
 export async function getRoomMembers(roomId: string): Promise<User[]> {
+  // TODO: 백엔드 구현 후 USE_REAL_ROOM 플래그 적용
+  // if (USE_REAL_ROOM) {
+  //   return await endpoints.getRoomMembers(roomId);
+  // }
   await delay(300);
   return mockUsers;
 }
@@ -224,10 +236,12 @@ export async function getTemporarySchedule(): Promise<WeeklySchedule> {
 /**
  * 주간 스케줄 저장
  * 백엔드 연동 시: POST /schedules (기본값: TEMPORARY)
+ * @param schedule Frontend WeeklySchedule
+ * @param weekStart 해당 주의 월요일 날짜 (YYYY-MM-DD 형식)
  */
-export async function saveSchedule(schedule: WeeklySchedule): Promise<void> {
+export async function saveSchedule(schedule: WeeklySchedule, weekStart: string): Promise<void> {
   if (USE_REAL_SCHEDULE) {
-    await endpoints.saveSchedule(schedule);
+    await endpoints.saveSchedule(schedule, weekStart);
     return;
   }
   await delay(500);

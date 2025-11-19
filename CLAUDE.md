@@ -306,7 +306,10 @@ useEffect(() => {
 - **Phase 5 (In Progress):** Backend API integration
   - ✅ Phase 1-2: Authentication & User Profile (완료)
   - ✅ Phase 3: Room 생성/참여 (완료)
-  - ✅ Phase 4: Schedule 저장/조회 (완료) - **백엔드 대규모 업데이트 반영 완료**
+  - ✅ **Phase 4: Schedule 저장/조회 (완료) - 백엔드 API 완전 통합!**
+    - ISO timestamp 형식으로 날짜 포함 전송
+    - FREE 블록 명시적 생성 (24시간 공백 없음)
+    - 백엔드 검증 로직 통과 (날짜별 00:00~24:00 완전 커버)
   - ✅ Active/Temporary 스케줄 분리 (완료)
   - ✅ 타임라인 렌더링 개선 (시간별 칸 구분)
   - ⏳ Phase 5-7: Preferences, Assignments (예정)
@@ -320,6 +323,7 @@ useEffect(() => {
 - ✅ **Component reusability maximized** (LoadingSpinner, PageContainer, EmptyState)
 - ✅ **Backend types prepared** (types/api.ts, apiTransformers.ts)
 - ✅ **Backend integration optimized** (Active/Temporary schedule separation, hour-by-hour timeline rendering)
+- ✅ **Schedule API 완전 통합** (ISO timestamp, FREE 블록, 날짜 포함)
 
 ### Backend Integration Status
 
@@ -345,7 +349,11 @@ useEffect(() => {
 - **Schedule** (ScheduleStatus: ACTIVE/TEMPORARY 구분)
   - ✅ Get active schedule (`GET /api/schedules/ActiveSchedules`) - 현재 주 스케줄
   - ✅ Get temporary schedule (`GET /api/schedules/TemporarySchedules`) - 다음 주 스케줄
-  - ✅ Save schedule (`POST /api/schedules`) - 기본값: TEMPORARY
+  - ✅ Save schedule (`POST /api/schedules`) - **완전 통합 완료!**
+    - ISO timestamp 형식으로 날짜 포함 전송
+    - FREE 블록 명시적 생성 (24시간 공백 없음)
+    - 온보딩: 현재 주(ACTIVE), 메인: 다음 주(TEMPORARY)
+    - ⚠️ 필드명: `startTime/endTime` (API 문서와 다름, 실제 백엔드 구현 기준)
   - 🔄 Get all schedules (전체 룸메이트) - Mock mode (백엔드 미구현)
   - ✅ Frontend ↔ Backend data transformation (TimeBlock conversion)
   - ✅ ScheduleStatus 개념: ACTIVE (현재 주), TEMPORARY (다음 주)
@@ -388,9 +396,10 @@ NEXT_PUBLIC_USE_REAL_SCHEDULE=true
 
 **Data format differences handled by transformers:**
 - DayOfWeek: 'mon' (frontend) ↔ 'MONDAY' (backend)
-- TimeSlot: 'quiet' ↔ 'QUIET', 'out' ↔ 'BUSY'
-- Time: hours (0-23) ↔ minutes from midnight (0-1439)
+- TimeSlot: 'quiet' ↔ 'QUIET', 'out' ↔ 'BUSY', null ↔ 'FREE'
+- Time: hours (0-23) ↔ ISO timestamp with date (e.g., "2025-11-24T09:00:00.000Z")
 - User fields: `realName` (frontend) ↔ `name` (backend)
+- **Schedule fields**: `startTime/endTime` (API 문서는 startDateTime/endDateTime이지만 실제 구현은 startTime/endTime)
 
 ### Authentication Status
 
