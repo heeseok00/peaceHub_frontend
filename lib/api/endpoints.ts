@@ -91,6 +91,12 @@ async function handleResponse<T>(response: Response): Promise<T> {
     return null as T;
   }
 
+  // 201 Created인데 Body가 없는 경우 처리 (신규 유저 스케줄 저장)
+  const contentType = response.headers.get('content-type');
+  if (response.status === 201 && (!contentType || !contentType.includes('application/json'))) {
+    return null as T;
+  }
+
   return response.json();
 }
 
