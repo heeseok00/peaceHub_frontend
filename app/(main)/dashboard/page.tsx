@@ -10,7 +10,6 @@ import { getCurrentUser, getActiveSchedule } from '@/lib/api/endpoints';
 import {
   getRoomMembers,
   getCurrentAssignments,
-  getAllSchedules,
 } from '@/lib/api/client';
 import { useApiData, useParallelApiData } from '@/hooks/useApiData';
 
@@ -47,34 +46,25 @@ export default function DashboardPage() {
     { autoFetch: !!currentUser }
   );
 
-  // 3. Fetch all schedules once users are loaded (통합 타임라인용)
+  // 3. Create allSchedules Map from mySchedule (통합 타임라인용)
   // 🔧 임시: mySchedule을 Map 형식으로 변환하여 사용 (getRoomMembers가 빈 배열 반환하므로)
-  const getAllSchedulesCallback = useCallback(async () => {
-    if (!displayUsers || displayUsers.length === 0) {
+  const allSchedules = useMemo(() => {
+    if (!currentUser || !mySchedule) {
       return new Map<string, WeeklySchedule>();
     }
 
     // 🔧 임시: 실제 API가 없으므로 내 스케줄만 Map으로 반환
-    if (currentUser && mySchedule) {
-      const scheduleMap = new Map<string, WeeklySchedule>();
-      scheduleMap.set(currentUser.id, mySchedule);
-      return scheduleMap;
-    }
+    const scheduleMap = new Map<string, WeeklySchedule>();
+    scheduleMap.set(currentUser.id, mySchedule);
+    return scheduleMap;
 
     // 원래 로직 (백엔드 구현되면 활성화)
     // const userIds = displayUsers.map(u => u.id);
     // return getAllSchedules(userIds);
+  }, [currentUser, mySchedule]);
 
-    return new Map<string, WeeklySchedule>();
-  }, [displayUsers, currentUser, mySchedule]);
-
-  const { data: allSchedules, isLoading: isLoadingSchedules, error: schedulesError } = useApiData(
-    getAllSchedulesCallback,
-    { autoFetch: !!currentUser && !!mySchedule }
-  );
-
-  const isLoading = isLoadingParallel || isLoadingMySchedule || isLoadingSchedules;
-  const error = parallelError || myScheduleError || schedulesError;
+  const isLoading = isLoadingParallel || isLoadingMySchedule;
+  const error = parallelError || myScheduleError;
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
