@@ -50,7 +50,7 @@ The app uses **Real backend APIs** with fallback for unimplemented endpoints:
 - Authentication: `getCurrentUser()`, `getGoogleAuthUrl()`
 - Profile: `updateProfile(data)`
 - Room: `createRoom()`, `joinRoom()`
-- Schedule: `getActiveSchedule()`, `getTemporarySchedule()`, `saveSchedule()`
+- Schedule: `getActiveSchedule()`, `getTemporarySchedule()`, `saveSchedule()`, `getDailySchedule()`, `getMemberDailySchedule()`
 
 **⏳ Fallback APIs (use client.ts - backend pending):**
 - Room: `getMyRoom()`, `getRoomMembers()` → return `null`, `[]`
@@ -123,6 +123,18 @@ types/
 **Type Conversion:** Use `lib/utils/apiTransformers.ts`
 - `toBackendDay()` / `fromBackendDay()` - DayOfWeek conversion
 - `toBackendSchedule()` / `fromBackendSchedule()` - Schedule format conversion
+
+## Backend API Notes
+
+### Error Handling
+- **401 Unauthorized**: 자동으로 `/login`으로 리디렉션
+- **403 Forbidden** (not participate in room): 자동으로 `/onboarding/join-room`으로 리디렉션
+- **201 Created**: body가 없을 수 있음 (신규 유저 스케줄 저장 시)
+
+### Schedule API 특징
+- **URL 컨벤션**: camelCase (`activeSchedules`, `temporarySchedules`)
+- **dayOfWeek 필드**: 백엔드 응답에 포함되지 않을 수 있음 → startTime에서 자동 추출
+- **memberDaily**: QUIET + TASK만 필터링하여 반환 (외출/빈 시간 제외)
 
 ## Important Conventions
 
@@ -319,12 +331,16 @@ All onboarding and main app Real APIs are fully integrated:
   - ⏳ Get room members (`GET /api/rooms/:id/members`) - returns `[]` (pending backend)
 
 - **Schedule** (ScheduleStatus: ACTIVE/TEMPORARY)
-  - ✅ Get active schedule (`GET /api/schedules/ActiveSchedules`) - 현재 주
-  - ✅ Get temporary schedule (`GET /api/schedules/TemporarySchedules`) - 다음 주
+  - ✅ Get active schedule (`GET /api/schedules/activeSchedules`) - 현재 주
+  - ✅ Get temporary schedule (`GET /api/schedules/temporarySchedules`) - 다음 주
   - ✅ Save schedule (`POST /api/schedules`)
     - ISO timestamp format with date
     - Explicit FREE blocks (24h coverage)
     - Onboarding: ACTIVE, Main: TEMPORARY
+    - 신규 유저: 201 status code만 반환 (body 없음)
+    - 기존 유저: 201 + JSON body 반환
+  - ✅ Get daily schedule (`GET /api/schedules/daily?date=YYYY-MM-DD`) - 날짜별 스케줄 (ACTIVE + TEMPORARY + History)
+  - ✅ Get member daily schedule (`GET /api/schedules/memberDaily?date=YYYY-MM-DD`) - 방 멤버 전체 스케줄 (QUIET + TASK만)
   - ⏳ Get all schedules - returns `new Map()` (pending backend)
 
 - **Preferences**
@@ -335,10 +351,11 @@ All onboarding and main app Real APIs are fully integrated:
 
 **Data Transformers:**
 - `lib/utils/apiTransformers.ts` handles frontend ↔ backend conversion
-- DayOfWeek: `'mon'` ↔ `'MONDAY'`
-- TimeSlot: `'quiet'` ↔ `'QUIET'`, `'out'` ↔ `'BUSY'`, `null` ↔ `'FREE'`
+- DayOfWeek: `'mon'` ↔ `'MONDAY'` (백엔드 응답에서 dayOfWeek 필드가 없으면 startTime에서 자동 추출)
+- TimeSlot: `'quiet'` ↔ `'QUIET'`, `'out'` ↔ `'BUSY'`, `null` ↔ `'FREE'`, `'task'` ↔ `'TASK'`
 - Time: hours (0-23) ↔ ISO timestamps
-- User: `realName` ↔ `name`
+- User: `realName` ↔ `name`, `workLoad` 추가, `room` 정보 포함
+- Schedule: `fromBackendScheduleBlocks()` - 업무 정보(taskInfo) 포함 변환
 
 ### Authentication Status
 
@@ -346,6 +363,7 @@ All onboarding and main app Real APIs are fully integrated:
 - ✅ **Session-based authentication** working (connect.sid cookie)
 - ✅ **Protected routes** via `checkAuth` middleware (backend)
 - ✅ **401 auto-redirect** to login page (global error handling in `endpoints.ts`)
+- ✅ **403 auto-redirect** to onboarding page (방 미참여 시 - `requireRoom` middleware)
 - ✅ **Automatic logout on session expiry** - all API calls checked
 - ⚠️ Frontend route protection not implemented (optional for SPA)
 

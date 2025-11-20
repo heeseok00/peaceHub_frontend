@@ -4,7 +4,7 @@
  * 백엔드와 실제로 통신하는 fetch 기반 API 함수들
  */
 
-import type { User, Room, WeeklySchedule, Preference } from '@/types';
+import type { User, Room, WeeklySchedule, Preference, ScheduleBlock } from '@/types';
 import type {
   GetCurrentUserResponse,
   CreateRoomRequest,
@@ -12,11 +12,13 @@ import type {
   JoinRoomRequest,
   PostScheduleRequest,
   GetScheduleResponse,
+  GetMemberDailyScheduleResponse,
   API_BASE_URL as BASE_URL,
 } from '@/types/api';
 import {
   toBackendSchedule,
   fromBackendSchedule,
+  fromBackendScheduleBlocks,
 } from '@/lib/utils/apiTransformers';
 
 // ==================== API Configuration ====================
@@ -384,6 +386,22 @@ export async function getDailySchedule(date: string): Promise<WeeklySchedule> {
 
   // Backend TimeBlock[] → Frontend WeeklySchedule 변환
   const converted = fromBackendSchedule(response);
+
+  return converted;
+}
+
+/**
+ * 날짜별 멤버 스케줄 조회 (같은 방의 모든 멤버, QUIET + TASK만)
+ * GET /api/schedules/memberDaily?date=YYYY-MM-DD
+ *
+ * @param date 조회할 날짜 (YYYY-MM-DD 형식)
+ * @returns ScheduleBlock[] (업무 정보 포함, userId별로 그룹화되지 않음)
+ */
+export async function getMemberDailySchedule(date: string): Promise<ScheduleBlock[]> {
+  const response = await get<GetMemberDailyScheduleResponse>(`/schedules/memberDaily?date=${date}`);
+
+  // Backend TimeBlock[] → Frontend ScheduleBlock[] 변환 (업무 정보 포함)
+  const converted = fromBackendScheduleBlocks(response);
 
   return converted;
 }

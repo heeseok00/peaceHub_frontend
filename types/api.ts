@@ -140,6 +140,14 @@ export type GetScheduleResponse = BackendTimeBlock[];
  */
 export type GetDailyScheduleResponse = (BackendTimeBlock | BackendScheduleHistory)[];
 
+/**
+ * 날짜별 멤버 스케줄 조회 응답
+ * GET /api/schedules/memberDaily?date=YYYY-MM-DD
+ *
+ * 같은 방의 모든 멤버 스케줄 (QUIET + TASK만 필터링)
+ */
+export type GetMemberDailyScheduleResponse = BackendTimeBlock[];
+
 // ==================== Room Task ====================
 
 /**
