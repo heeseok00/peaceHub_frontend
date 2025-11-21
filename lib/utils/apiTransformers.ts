@@ -241,9 +241,17 @@ export function fromBackendSchedule(blocks: BackendTimeBlock[]): WeeklySchedule 
 
   // 백엔드 데이터로 덮어쓰기
   blocks.forEach((block) => {
+    // startTime 또는 startDateTime 사용 (백엔드 버전에 따라 다름)
+    const startTimeStr = block.startDateTime || block.startTime;
+    const endTimeStr = block.endDateTime || block.endTime;
+    
+    if (!startTimeStr || !endTimeStr) {
+      console.warn('Missing startTime/endTime in block:', block);
+      return;
+    }
+
     // 항상 startTime에서 요일을 추출 (dayOfWeek 필드는 날짜와 불일치할 수 있음)
-    // UTC 기준으로 요일 추출 (시간대 변환으로 인한 오류 방지)
-    const day = getDayOfWeekFromISO(block.startTime);
+    const day = getDayOfWeekFromISO(startTimeStr);
 
     // day가 유효하지 않은 경우 스킵
     if (!day || !schedule[day]) {
@@ -252,8 +260,8 @@ export function fromBackendSchedule(blocks: BackendTimeBlock[]): WeeklySchedule 
     }
 
     const slot = fromBackendTimeSlot(block.type);
-    const startHour = hourFromISOTimestamp(block.startTime);
-    const endHour = hourFromISOTimestamp(block.endTime);
+    const startHour = hourFromISOTimestamp(startTimeStr);
+    const endHour = hourFromISOTimestamp(endTimeStr);
 
     // startHour부터 endHour 이전까지 TimeSlot 설정
     for (let hour = startHour; hour < endHour && hour < 24; hour++) {
@@ -353,11 +361,15 @@ export function validateBackendSchedule(
  * @returns Frontend ScheduleBlock
  */
 export function fromBackendScheduleBlock(block: BackendTimeBlock): ScheduleBlock {
+  // startTime 또는 startDateTime 사용 (백엔드 버전에 따라 다름)
+  const startTime = block.startDateTime || block.startTime || '';
+  const endTime = block.endDateTime || block.endTime || '';
+  
   return {
     id: block.id || '',
     type: fromBackendBlockType(block.type),
-    startTime: block.startTime,
-    endTime: block.endTime,
+    startTime,
+    endTime,
     status: block.status || 'ACTIVE',
     userId: block.userId || '',
     taskInfo:
@@ -392,8 +404,8 @@ export function fromBackendScheduleHistory(history: BackendScheduleHistory): Sch
   return {
     id: history.id,
     type: fromBackendBlockType(history.type),
-    startTime: history.startTime,
-    endTime: history.endTime,
+    startTime: history.startDateTime,
+    endTime: history.endDateTime,
     userId: history.userId,
     taskInfo:
       history.type === 'TASK' && history.roomTask

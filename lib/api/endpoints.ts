@@ -300,22 +300,29 @@ export async function getMyRoom(): Promise<Room | null> {
 
 /**
  * 방 멤버 목록 조회
- * GET /api/rooms/:roomId/members (구현되어 있다면)
+ * GET /api/rooms/:roomId/members
  */
 export async function getRoomMembers(roomId: string): Promise<User[]> {
-  // TODO: 백엔드 API 엔드포인트 확인 필요
-  const response = await get<GetCurrentUserResponse[]>(`/rooms/${roomId}/members`);
+  try {
+    console.log('🔍 getRoomMembers 호출:', roomId);
+    const response = await get<GetCurrentUserResponse[]>(`/rooms/${roomId}/members`);
+    console.log('✅ getRoomMembers 응답:', response);
 
-  return response.map(user => ({
-    id: user.id,
-    email: user.email,
-    profileImage: user.picture || '', // Google OAuth에서 제공될 수 있음
-    realName: user.realName || user.name || '', // realName이 없으면 name 사용
-    country: user.country || '',
-    language: user.language || '',
-    roomId: user.roomId ?? undefined,
-    createdAt: user.createdAt,
-  }));
+    return response.map(user => ({
+      id: user.id,
+      email: user.email,
+      profileImage: user.picture || '',
+      realName: user.realName || user.name || '',
+      country: user.country || '',
+      language: user.language || '',
+      roomId: user.roomId ?? undefined,
+      createdAt: user.createdAt,
+    }));
+  } catch (error) {
+    console.error('❌ getRoomMembers 에러:', error);
+    // 에러 발생 시 빈 배열 반환 (대신 에러를 던지지 않음)
+    return [];
+  }
 }
 
 // ==================== Schedule ====================
@@ -366,8 +373,10 @@ export async function saveSchedule(schedule: WeeklySchedule, weekStart: string):
   // 날짜별 그룹화하여 확인
   const byDate: { [key: string]: number } = {};
   requestData.forEach(block => {
-    const date = block.startTime.split('T')[0];
-    byDate[date] = (byDate[date] || 0) + 1;
+    if (block.startTime) {
+      const date = block.startTime.split('T')[0];
+      byDate[date] = (byDate[date] || 0) + 1;
+    }
   });
   console.log('날짜별 블록 수:', byDate);
 
@@ -398,12 +407,22 @@ export async function getDailySchedule(date: string): Promise<WeeklySchedule> {
  * @returns ScheduleBlock[] (업무 정보 포함, userId별로 그룹화되지 않음)
  */
 export async function getMemberDailySchedule(date: string): Promise<ScheduleBlock[]> {
-  const response = await get<GetMemberDailyScheduleResponse>(`/schedules/memberDaily?date=${date}`);
+  try {
+    console.log('🔍 getMemberDailySchedule 호출:', date);
+    const response = await get<GetMemberDailyScheduleResponse>(`/schedules/memberDaily?date=${date}`);
+    console.log('✅ getMemberDailySchedule 원본 응답:', response);
+    console.log('응답 길이:', response?.length);
 
-  // Backend TimeBlock[] → Frontend ScheduleBlock[] 변환 (업무 정보 포함)
-  const converted = fromBackendScheduleBlocks(response);
+    // Backend TimeBlock[] → Frontend ScheduleBlock[] 변환 (업무 정보 포함)
+    const converted = fromBackendScheduleBlocks(response);
+    console.log('✅ 변환된 ScheduleBlock[]:', converted);
 
-  return converted;
+    return converted;
+  } catch (error) {
+    console.error('❌ getMemberDailySchedule 에러:', error);
+    // 에러 발생 시 빈 배열 반환
+    return [];
+  }
 }
 
 // ==================== Preferences (TODO) ====================

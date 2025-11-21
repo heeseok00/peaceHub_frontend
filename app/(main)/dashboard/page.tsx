@@ -5,13 +5,13 @@ import MonthlyCalendar from '@/components/dashboard/MonthlyCalendar';
 import CombinedTimelineBar from '@/components/dashboard/CombinedTimelineBar';
 import TimelineBar from '@/components/dashboard/TimelineBar';
 import { MainLoadingSpinner } from '@/components/common/LoadingSpinner';
-import type { User, Assignment, WeeklySchedule } from '@/types';
-import { getCurrentUser, getDailySchedule } from '@/lib/api/endpoints';
+import type { User, Assignment, WeeklySchedule, DayOfWeek } from '@/types';
+import { getCurrentUser, getDailySchedule, getRoomMembers, getMemberDailySchedule } from '@/lib/api/endpoints';
 import {
-  getRoomMembers,
   getCurrentAssignments,
 } from '@/lib/api/client';
-import { useApiData, useParallelApiData } from '@/hooks/useApiData';
+import { useApiData } from '@/hooks/useApiData';
+import { getDayOfWeek, hourFromISOTimestamp } from '@/lib/utils/dateHelpers';
 
 /**
  * 대시보드 페이지
@@ -24,23 +24,24 @@ export default function DashboardPage() {
 
   const detailsRef = useRef<HTMLDivElement>(null);
 
-  // 1. Fetch primary data in parallel
-  const getRoomMembersCallback = useCallback(() => getRoomMembers('room-1'), []);
-  const apiFunctions = useMemo(() => [
-    getCurrentUser,
+  // 1. Fetch current user first
+  const { data: currentUser, isLoading: isLoadingUser, error: userError } = useApiData(getCurrentUser);
+
+  // 2. Fetch room members (currentUser.roomId 사용)
+  const getRoomMembersCallback = useCallback(
+    () => currentUser?.roomId ? getRoomMembers(currentUser.roomId) : Promise.resolve([]),
+    [currentUser?.roomId]
+  );
+
+  const { data: roomMembers, isLoading: isLoadingMembers } = useApiData(
     getRoomMembersCallback,
-    getCurrentAssignments,
-  ], [getRoomMembersCallback]);
+    { autoFetch: !!currentUser?.roomId }
+  );
 
-  const { data: parallelData, isLoading: isLoadingParallel, error: parallelError } = useParallelApiData(apiFunctions);
-  const currentUser = (parallelData?.[0] as User | null) || null;
-  const users = (parallelData?.[1] as User[]) || [];
-  const assignments = (parallelData?.[2] as Assignment[]) || [];
+  // 3. Fetch assignments
+  const { data: assignments, isLoading: isLoadingAssignments } = useApiData(getCurrentAssignments);
 
-  // 🔧 임시: users가 비어있으면 currentUser만이라도 표시
-  const displayUsers = users.length > 0 ? users : (currentUser ? [currentUser] : []);
-
-  // 2. Fetch daily schedule for selected date (선택한 날짜의 스케줄 조회)
+  // 4. Fetch daily schedule for selected date (선택한 날짜의 스케줄 조회)
   const selectedDateStr = useMemo(
     () => `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`,
     [selectedDate]
@@ -51,30 +52,133 @@ export default function DashboardPage() {
     [selectedDateStr]
   );
 
-  const { data: mySchedule, isLoading: isLoadingMySchedule, error: myScheduleError } = useApiData(
+  const { data: mySchedule, isLoading: isLoadingMySchedule } = useApiData(
     getDailyScheduleCallback,
     { autoFetch: !!currentUser }
   );
 
-  // 3. Create allSchedules Map from mySchedule (통합 타임라인용)
-  // 🔧 임시: mySchedule을 Map 형식으로 변환하여 사용 (getRoomMembers가 빈 배열 반환하므로)
+  // 5. Fetch all members' schedules for selected date (통합 타임라인용)
+  const getMemberSchedulesCallback = useCallback(
+    () => getMemberDailySchedule(selectedDateStr),
+    [selectedDateStr]
+  );
+
+  const { data: memberScheduleBlocks, isLoading: isLoadingMemberSchedules } = useApiData(
+    getMemberSchedulesCallback,
+    { autoFetch: !!currentUser?.roomId }
+  );
+  
+  // 🔍 디버깅: 멤버 스케줄 블록 확인
+  console.log('selectedDateStr:', selectedDateStr);
+  console.log('memberScheduleBlocks:', memberScheduleBlocks);
+  console.log('memberScheduleBlocks length:', memberScheduleBlocks?.length);
+
+  // 6. 사용자 목록 생성 (memberScheduleBlocks 이후)
+  const displayUsers = useMemo(() => {
+    // 1. roomMembers가 있으면 사용
+    if (roomMembers && roomMembers.length > 0) {
+      return roomMembers;
+    }
+    
+    // 2. memberScheduleBlocks에서 userId 추출하여 사용자 목록 생성
+    if (memberScheduleBlocks && memberScheduleBlocks.length > 0) {
+      const userIds = Array.from(new Set(memberScheduleBlocks.map(b => b.userId)));
+      console.log('📋 memberScheduleBlocks에서 추출한 userIds:', userIds);
+      
+      // userId만 가진 임시 User 객체 생성
+      return userIds.map(userId => ({
+        id: userId,
+        email: '',
+        realName: userId === currentUser?.id ? currentUser.realName : `사용자 ${userId.substring(0, 8)}`,
+        country: '',
+        language: '',
+        createdAt: '',
+      }));
+    }
+    
+    // 3. 아무것도 없으면 currentUser만
+    return currentUser ? [currentUser] : [];
+  }, [roomMembers, memberScheduleBlocks, currentUser]);
+  
+  // 🔍 디버깅: 방 멤버 확인
+  console.log('=== Dashboard Debug ===');
+  console.log('currentUser:', currentUser);
+  console.log('currentUser.roomId:', currentUser?.roomId);
+  console.log('roomMembers:', roomMembers);
+  console.log('displayUsers:', displayUsers);
+
+  // 7. Convert ScheduleBlock[] to Map<userId, WeeklySchedule>
   const allSchedules = useMemo(() => {
-    if (!currentUser || !mySchedule) {
-      return new Map<string, WeeklySchedule>();
+    console.log('🔍 allSchedules useMemo 실행');
+    console.log('memberScheduleBlocks:', memberScheduleBlocks);
+    
+    const scheduleMap = new Map<string, WeeklySchedule>();
+
+    if (!memberScheduleBlocks || memberScheduleBlocks.length === 0) {
+      console.log('⚠️ memberScheduleBlocks가 비어있음!');
+      console.log('날짜 확인:', selectedDateStr);
+      console.log('이 날짜에 스케줄 데이터가 없을 수 있습니다. 다른 날짜를 선택해보세요.');
+      
+      // 멤버 스케줄이 없으면 내 스케줄만 사용
+      if (currentUser && mySchedule) {
+        scheduleMap.set(currentUser.id, mySchedule);
+        console.log('내 스케줄만 추가:', currentUser.id);
+      }
+      return scheduleMap;
     }
 
-    // 🔧 임시: 실제 API가 없으므로 내 스케줄만 Map으로 반환
-    const scheduleMap = new Map<string, WeeklySchedule>();
-    scheduleMap.set(currentUser.id, mySchedule);
+    // userId별로 그룹화
+    console.log('✅ memberScheduleBlocks 존재, 변환 시작. 블록 수:', memberScheduleBlocks.length);
+    
+    memberScheduleBlocks.forEach((block, index) => {
+      console.log(`Block ${index}:`, {
+        userId: block.userId,
+        type: block.type,
+        startTime: block.startTime,
+        endTime: block.endTime
+      });
+      
+      if (!scheduleMap.has(block.userId)) {
+        // 빈 WeeklySchedule 초기화 (모든 시간을 null로)
+        const emptySchedule: WeeklySchedule = {
+          mon: {}, tue: {}, wed: {}, thu: {}, fri: {}, sat: {}, sun: {}
+        };
+        ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].forEach((day) => {
+          const d = day as DayOfWeek;
+          for (let hour = 0; hour < 24; hour++) {
+            emptySchedule[d][hour] = null;
+          }
+        });
+        scheduleMap.set(block.userId, emptySchedule);
+        console.log(`새 사용자 스케줄 초기화: ${block.userId}`);
+      }
+
+      const userSchedule = scheduleMap.get(block.userId)!;
+      
+      // ISO timestamp에서 요일과 시간 추출
+      const day = getDayOfWeek(new Date(block.startTime));
+      const startHour = hourFromISOTimestamp(block.startTime);
+      const endHour = hourFromISOTimestamp(block.endTime);
+
+      console.log(`  -> day: ${day}, startHour: ${startHour}, endHour: ${endHour}, type: ${block.type}`);
+
+      // 시간대별로 상태 설정 (QUIET, OUT만 표시, TASK는 assignments에서 처리)
+      if (block.type === 'quiet' || block.type === 'out') {
+        for (let hour = startHour; hour < endHour && hour < 24; hour++) {
+          userSchedule[day][hour] = block.type;
+        }
+        console.log(`  -> ${block.type} 시간 설정 완료: ${startHour}~${endHour}시`);
+      }
+    });
+
+    console.log('최종 scheduleMap 사용자 수:', scheduleMap.size);
+    console.log('scheduleMap keys:', Array.from(scheduleMap.keys()));
+    
     return scheduleMap;
+  }, [memberScheduleBlocks, currentUser, mySchedule]);
 
-    // 원래 로직 (백엔드 구현되면 활성화)
-    // const userIds = displayUsers.map(u => u.id);
-    // return getAllSchedules(userIds);
-  }, [currentUser, mySchedule]);
-
-  const isLoading = isLoadingParallel || isLoadingMySchedule;
-  const error = parallelError || myScheduleError;
+  const isLoading = isLoadingUser || isLoadingMembers || isLoadingAssignments || isLoadingMySchedule || isLoadingMemberSchedules;
+  const error = userError;
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
