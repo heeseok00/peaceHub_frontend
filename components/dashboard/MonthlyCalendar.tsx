@@ -3,6 +3,7 @@
 import type { Assignment, DayOfWeek } from '@/types';
 import { TASKS } from '@/types';
 import { TASK_EMOJIS } from '@/lib/constants/tasks';
+import { getDayOfWeek, getWeekStart } from '@/lib/utils/dateHelpers';
 
 /**
  * 월간 캘린더 컴포넌트
@@ -20,21 +21,6 @@ interface MonthlyCalendarProps {
   selectedUserId: string | null;
   onDateClick: (date: Date) => void;
   onMonthChange: (date: Date) => void;
-}
-
-// 날짜에서 주의 시작일(월요일) 계산
-function getWeekStart(date: Date): string {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  return d.toISOString().split('T')[0];
-}
-
-// 날짜에서 요일 추출
-function getDayOfWeek(date: Date): DayOfWeek {
-  const days: DayOfWeek[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-  return days[date.getDay()];
 }
 
 export default function MonthlyCalendar({

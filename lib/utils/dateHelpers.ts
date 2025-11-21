@@ -3,36 +3,44 @@ import type { DayOfWeek } from '@/types';
 /**
  * 주의 시작일(월요일) 계산
  * @param date 기준 날짜
- * @returns YYYY-MM-DD 형식의 월요일 날짜 문자열
+ * @returns YYYY-MM-DD 형식의 월요일 날짜 문자열 (로컬 시간 기준)
  */
 export function getWeekStart(date: Date): string {
   const d = new Date(date);
   const day = d.getDay();
   const diff = d.getDate() - day + (day === 0 ? -6 : 1); // 일요일인 경우 이전 주 월요일로
   d.setDate(diff);
-  return d.toISOString().split('T')[0];
+  
+  // 로컬 시간 기준으로 YYYY-MM-DD 형식 생성
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const dayStr = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${dayStr}`;
 }
 
 /**
- * 날짜에서 요일 추출
+ * 날짜에서 요일 추출 (월요일 기준)
  * @param date 기준 날짜
  * @returns DayOfWeek 타입의 요일
  */
 export function getDayOfWeek(date: Date): DayOfWeek {
   // JavaScript의 getDay(): 0(일) ~ 6(토)
-  const days: DayOfWeek[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-  return days[date.getDay()];
+  // 월요일 기준으로 변환: 월=0, 화=1, ..., 일=6
+  const days: DayOfWeek[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+  const jsDay = date.getDay(); // 0=일요일, 1=월요일, ..., 6=토요일
+  const adjustedDay = jsDay === 0 ? 6 : jsDay - 1; // 일요일(0)을 6으로, 나머지는 -1
+  return days[adjustedDay];
 }
 
 /**
- * ISO timestamp에서 UTC 기준 요일 추출
+ * ISO timestamp에서 로컬 시간 기준 요일 추출 (월요일 기준)
  * @param isoTimestamp ISO 8601 형식 문자열 (예: "2025-11-22T20:00:00.000Z")
  * @returns DayOfWeek 타입의 요일
  */
 export function getDayOfWeekFromISO(isoTimestamp: string): DayOfWeek {
   const date = new Date(isoTimestamp);
-  const days: DayOfWeek[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-  return days[date.getUTCDay()]; // UTC 기준 요일 사용
+  // getDayOfWeek 함수 재사용 (로컬 시간 기준)
+  return getDayOfWeek(date);
 }
 
 /**
@@ -198,20 +206,20 @@ export function hourFromISOTimestamp(isoTimestamp: string): number {
 }
 
 /**
- * YYYY-MM-DD 날짜 문자열에 일수를 더함
+ * YYYY-MM-DD 날짜 문자열에 일수를 더함 (로컬 시간 기준)
  * @param dateStr YYYY-MM-DD 형식 날짜
  * @param days 더할 일수
  * @returns YYYY-MM-DD 형식의 새 날짜 문자열
  */
 export function addDaysToDateString(dateStr: string, days: number): string {
-  // UTC 시간으로 파싱하여 시간대 문제 방지
+  // 로컬 시간으로 파싱
   const [year, month, day] = dateStr.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  date.setUTCDate(date.getUTCDate() + days);
+  const date = new Date(year, month - 1, day);
+  date.setDate(date.getDate() + days);
 
-  // UTC 날짜를 YYYY-MM-DD 형식으로 변환
-  const resultYear = date.getUTCFullYear();
-  const resultMonth = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const resultDay = String(date.getUTCDate()).padStart(2, '0');
+  // 로컬 날짜를 YYYY-MM-DD 형식으로 변환
+  const resultYear = date.getFullYear();
+  const resultMonth = String(date.getMonth() + 1).padStart(2, '0');
+  const resultDay = String(date.getDate()).padStart(2, '0');
   return `${resultYear}-${resultMonth}-${resultDay}`;
 }
