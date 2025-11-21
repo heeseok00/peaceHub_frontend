@@ -99,11 +99,11 @@ export interface JoinRoomRequest {
  * 주간 스케줄은 타임 블록의 배열로 표현됩니다.
  * - dayOfWeek: 요일 (대문자)
  * - type: 블록 타입 (QUIET, BUSY, TASK, FREE)
- * - startDateTime, endDateTime: ISO 8601 timestamp (날짜 포함)
+ * - startTime, endTime: ISO 8601 timestamp (날짜 포함)
  *   예) "2025-11-24T09:00:00.000Z"
  *
  * 주의: POST 요청(스케줄 저장)은 startTime/endTime 사용
- *       GET 응답(스케줄 조회)은 startDateTime/endDateTime 사용
+ *       GET 응답(스케줄 조회)은 startTime/endTime 사용
  */
 export interface BackendTimeBlock {
   id?: string; // 백엔드에서 제공하는 ID (응답 시)
@@ -113,8 +113,7 @@ export interface BackendTimeBlock {
   startTime?: string; // ISO 8601 timestamp
   endTime?: string; // ISO 8601 timestamp
   // GET 응답용
-  startDateTime?: string; // ISO 8601 timestamp (응답 시)
-  endDateTime?: string; // ISO 8601 timestamp (응답 시)
+
   status?: 'ACTIVE' | 'TEMPORARY'; // 스케줄 상태 (응답 시)
   userId?: string; // 사용자 ID (응답 시)
   roomTaskId?: string; // TASK 타입일 경우 업무 ID (응답 시)
@@ -206,8 +205,8 @@ export interface PostTaskPreferenceRequest {
  */
 export interface BackendScheduleHistory {
   id: string;
-  startDateTime: string; // ISO 8601 timestamp (응답)
-  endDateTime: string; // ISO 8601 timestamp (응답)
+  startTime: string; // ISO 8601 timestamp (응답)
+  endTime: string; // ISO 8601 timestamp (응답)
   type: BackendTimeBlockType; // QUIET, BUSY, FREE, TASK
   roomTaskId?: string; // TASK일 경우 업무 ID
   roomTask?: {

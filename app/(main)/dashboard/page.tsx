@@ -68,10 +68,10 @@ export default function DashboardPage() {
     { autoFetch: !!currentUser?.roomId }
   );
   
-  // 🔍 디버깅: 멤버 스케줄 블록 확인
-  console.log('selectedDateStr:', selectedDateStr);
-  console.log('memberScheduleBlocks:', memberScheduleBlocks);
-  console.log('memberScheduleBlocks length:', memberScheduleBlocks?.length);
+  // 디버깅 로그 (필요시 주석 해제)
+  // console.log('selectedDateStr:', selectedDateStr);
+  // console.log('memberScheduleBlocks:', memberScheduleBlocks);
+  // console.log('memberScheduleBlocks length:', memberScheduleBlocks?.length);
 
   // 6. 사용자 목록 생성 (memberScheduleBlocks 이후)
   const displayUsers = useMemo(() => {
@@ -83,7 +83,6 @@ export default function DashboardPage() {
     // 2. memberScheduleBlocks에서 userId 추출하여 사용자 목록 생성
     if (memberScheduleBlocks && memberScheduleBlocks.length > 0) {
       const userIds = Array.from(new Set(memberScheduleBlocks.map(b => b.userId)));
-      console.log('📋 memberScheduleBlocks에서 추출한 userIds:', userIds);
       
       // userId만 가진 임시 User 객체 생성
       return userIds.map(userId => ({
@@ -100,43 +99,27 @@ export default function DashboardPage() {
     return currentUser ? [currentUser] : [];
   }, [roomMembers, memberScheduleBlocks, currentUser]);
   
-  // 🔍 디버깅: 방 멤버 확인
-  console.log('=== Dashboard Debug ===');
-  console.log('currentUser:', currentUser);
-  console.log('currentUser.roomId:', currentUser?.roomId);
-  console.log('roomMembers:', roomMembers);
-  console.log('displayUsers:', displayUsers);
+  // 디버깅 로그 (필요시 주석 해제)
+  // console.log('=== Dashboard Debug ===');
+  // console.log('currentUser:', currentUser);
+  // console.log('currentUser.roomId:', currentUser?.roomId);
+  // console.log('roomMembers:', roomMembers);
+  // console.log('displayUsers:', displayUsers);
 
   // 7. Convert ScheduleBlock[] to Map<userId, WeeklySchedule>
   const allSchedules = useMemo(() => {
-    console.log('🔍 allSchedules useMemo 실행');
-    console.log('memberScheduleBlocks:', memberScheduleBlocks);
-    
     const scheduleMap = new Map<string, WeeklySchedule>();
 
     if (!memberScheduleBlocks || memberScheduleBlocks.length === 0) {
-      console.log('⚠️ memberScheduleBlocks가 비어있음!');
-      console.log('날짜 확인:', selectedDateStr);
-      console.log('이 날짜에 스케줄 데이터가 없을 수 있습니다. 다른 날짜를 선택해보세요.');
-      
       // 멤버 스케줄이 없으면 내 스케줄만 사용
       if (currentUser && mySchedule) {
         scheduleMap.set(currentUser.id, mySchedule);
-        console.log('내 스케줄만 추가:', currentUser.id);
       }
       return scheduleMap;
     }
 
     // userId별로 그룹화
-    console.log('✅ memberScheduleBlocks 존재, 변환 시작. 블록 수:', memberScheduleBlocks.length);
-    
-    memberScheduleBlocks.forEach((block, index) => {
-      console.log(`Block ${index}:`, {
-        userId: block.userId,
-        type: block.type,
-        startTime: block.startTime,
-        endTime: block.endTime
-      });
+    memberScheduleBlocks.forEach((block) => {
       
       if (!scheduleMap.has(block.userId)) {
         // 빈 WeeklySchedule 초기화 (모든 시간을 null로)
@@ -150,7 +133,6 @@ export default function DashboardPage() {
           }
         });
         scheduleMap.set(block.userId, emptySchedule);
-        console.log(`새 사용자 스케줄 초기화: ${block.userId}`);
       }
 
       const userSchedule = scheduleMap.get(block.userId)!;
@@ -160,19 +142,13 @@ export default function DashboardPage() {
       const startHour = hourFromISOTimestamp(block.startTime);
       const endHour = hourFromISOTimestamp(block.endTime);
 
-      console.log(`  -> day: ${day}, startHour: ${startHour}, endHour: ${endHour}, type: ${block.type}`);
-
       // 시간대별로 상태 설정 (QUIET, OUT만 표시, TASK는 assignments에서 처리)
       if (block.type === 'quiet' || block.type === 'out') {
         for (let hour = startHour; hour < endHour && hour < 24; hour++) {
           userSchedule[day][hour] = block.type;
         }
-        console.log(`  -> ${block.type} 시간 설정 완료: ${startHour}~${endHour}시`);
       }
     });
-
-    console.log('최종 scheduleMap 사용자 수:', scheduleMap.size);
-    console.log('scheduleMap keys:', Array.from(scheduleMap.keys()));
     
     return scheduleMap;
   }, [memberScheduleBlocks, currentUser, mySchedule]);

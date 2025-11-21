@@ -241,9 +241,9 @@ export function fromBackendSchedule(blocks: BackendTimeBlock[]): WeeklySchedule 
 
   // 백엔드 데이터로 덮어쓰기
   blocks.forEach((block) => {
-    // startTime 또는 startDateTime 사용 (백엔드 버전에 따라 다름)
-    const startTimeStr = block.startDateTime || block.startTime;
-    const endTimeStr = block.endDateTime || block.endTime;
+    // startTime, endTime 사용
+    const startTimeStr = block.startTime;
+    const endTimeStr = block.endTime;
     
     if (!startTimeStr || !endTimeStr) {
       console.warn('Missing startTime/endTime in block:', block);
@@ -361,9 +361,9 @@ export function validateBackendSchedule(
  * @returns Frontend ScheduleBlock
  */
 export function fromBackendScheduleBlock(block: BackendTimeBlock): ScheduleBlock {
-  // startTime 또는 startDateTime 사용 (백엔드 버전에 따라 다름)
-  const startTime = block.startDateTime || block.startTime || '';
-  const endTime = block.endDateTime || block.endTime || '';
+  // startTime, endTime 사용
+  const startTime = block.startTime || '';
+  const endTime = block.endTime || '';
   
   return {
     id: block.id || '',
@@ -404,8 +404,8 @@ export function fromBackendScheduleHistory(history: BackendScheduleHistory): Sch
   return {
     id: history.id,
     type: fromBackendBlockType(history.type),
-    startTime: history.startDateTime,
-    endTime: history.endDateTime,
+    startTime: history.startTime,
+    endTime: history.endTime,
     userId: history.userId,
     taskInfo:
       history.type === 'TASK' && history.roomTask

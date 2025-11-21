@@ -304,9 +304,7 @@ export async function getMyRoom(): Promise<Room | null> {
  */
 export async function getRoomMembers(roomId: string): Promise<User[]> {
   try {
-    console.log('🔍 getRoomMembers 호출:', roomId);
     const response = await get<GetCurrentUserResponse[]>(`/rooms/${roomId}/members`);
-    console.log('✅ getRoomMembers 응답:', response);
 
     return response.map(user => ({
       id: user.id,
@@ -319,8 +317,8 @@ export async function getRoomMembers(roomId: string): Promise<User[]> {
       createdAt: user.createdAt,
     }));
   } catch (error) {
-    console.error('❌ getRoomMembers 에러:', error);
-    // 에러 발생 시 빈 배열 반환 (대신 에러를 던지지 않음)
+    // API 미구현 시 빈 배열 반환 (에러를 던지지 않음)
+    // console.error('getRoomMembers 404: 백엔드 API 미구현');
     return [];
   }
 }
@@ -408,18 +406,13 @@ export async function getDailySchedule(date: string): Promise<WeeklySchedule> {
  */
 export async function getMemberDailySchedule(date: string): Promise<ScheduleBlock[]> {
   try {
-    console.log('🔍 getMemberDailySchedule 호출:', date);
     const response = await get<GetMemberDailyScheduleResponse>(`/schedules/memberDaily?date=${date}`);
-    console.log('✅ getMemberDailySchedule 원본 응답:', response);
-    console.log('응답 길이:', response?.length);
 
     // Backend TimeBlock[] → Frontend ScheduleBlock[] 변환 (업무 정보 포함)
     const converted = fromBackendScheduleBlocks(response);
-    console.log('✅ 변환된 ScheduleBlock[]:', converted);
 
     return converted;
   } catch (error) {
-    console.error('❌ getMemberDailySchedule 에러:', error);
     // 에러 발생 시 빈 배열 반환
     return [];
   }

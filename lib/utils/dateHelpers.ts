@@ -35,9 +35,11 @@ export function getDayOfWeek(date: Date): DayOfWeek {
 /**
  * ISO timestamp에서 로컬 시간 기준 요일 추출 (월요일 기준)
  * @param isoTimestamp ISO 8601 형식 문자열 (예: "2025-11-22T20:00:00.000Z")
- * @returns DayOfWeek 타입의 요일
+ * @returns DayOfWeek 타입의 요일 (undefined인 경우 'mon' 반환)
  */
-export function getDayOfWeekFromISO(isoTimestamp: string): DayOfWeek {
+export function getDayOfWeekFromISO(isoTimestamp?: string): DayOfWeek {
+  if (!isoTimestamp) return 'mon';
+  
   const date = new Date(isoTimestamp);
   // getDayOfWeek 함수 재사용 (로컬 시간 기준)
   return getDayOfWeek(date);
@@ -195,10 +197,12 @@ export function toISOTimestamp(dateStr: string, hour: number): string {
  *
  * UTC 시간을 그대로 추출합니다 (타임존 변환 없음).
  *
- * @param isoTimestamp ISO 8601 형식 문자열
+ * @param isoTimestamp ISO 8601 형식 문자열 (undefined인 경우 0 반환)
  * @returns 시간 (0-23)
  */
-export function hourFromISOTimestamp(isoTimestamp: string): number {
+export function hourFromISOTimestamp(isoTimestamp?: string): number {
+  if (!isoTimestamp) return 0;
+  
   // "2025-11-24T09:00:00.000Z" → 09
   const timePart = isoTimestamp.split('T')[1];
   const hour = parseInt(timePart.split(':')[0], 10);
