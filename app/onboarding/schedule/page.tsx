@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import ScheduleEditor from '@/components/schedule/ScheduleEditor';
-import { saveSchedule, getTemporarySchedule } from '@/lib/api/endpoints';
+import { saveSchedule } from '@/lib/api/endpoints';
 import { getWeekStart } from '@/lib/utils/dateHelpers';
 import type { WeeklySchedule, DayOfWeek, HourlySchedule } from '@/types';
 
@@ -37,8 +37,9 @@ export default function OnboardingSchedulePage() {
     const loadSchedule = async () => {
       setIsLoading(true);
       try {
-        const data = await getTemporarySchedule();
-        setSchedule(data);
+        // 온보딩은 ACTIVE 스케줄을 사용하지 않고 항상 빈 스케줄로 시작
+        // (신규 유저이므로 기존 스케줄이 없음)
+        setSchedule(createEmptySchedule());
       } catch (error) {
         console.error('스케줄 로드 실패:', error);
         setSchedule(createEmptySchedule());
@@ -89,6 +90,11 @@ export default function OnboardingSchedulePage() {
     );
   }
 
+  // 이번 주 월요일 날짜 계산
+  const thisWeekStart = new Date(getWeekStart(new Date()));
+  const thisWeekEnd = new Date(thisWeekStart);
+  thisWeekEnd.setDate(thisWeekEnd.getDate() + 6);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 px-4 py-8">
       <div className="max-w-5xl mx-auto">
@@ -98,7 +104,9 @@ export default function OnboardingSchedulePage() {
             주간 타임테이블 설정
           </h1>
           <p className="text-gray-600">
-            매주 반복되는 일정을 설정해주세요 (일요일 밤 12시까지 수정 가능)
+            <strong className="text-primary-600">
+              이번 주 ({thisWeekStart.getMonth() + 1}월 {thisWeekStart.getDate()}일 ~ {thisWeekEnd.getMonth() + 1}월 {thisWeekEnd.getDate()}일)
+            </strong> 스케줄을 설정해주세요 (일요일 밤 12시까지 수정 가능)
           </p>
         </div>
 

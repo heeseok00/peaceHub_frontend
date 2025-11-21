@@ -57,13 +57,20 @@ export default function MainSchedulePage() {
     return <MainLoadingSpinner text="내 스케줄을 불러오는 중..." />;
   }
 
+  // 다음 주 월요일 날짜 계산
+  const nextWeekStart = new Date(getNextWeekStart());
+  const nextWeekEnd = new Date(nextWeekStart);
+  nextWeekEnd.setDate(nextWeekEnd.getDate() + 6);
+
   return (
     <div className="page-container">
       <div className="max-w-5xl mx-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-800">주간 타임테이블 수정</h1>
           <p className="text-sm text-gray-500 mt-1">
-            매주 반복되는 일정을 수정합니다. (일요일 밤 12시까지 수정 가능)
+            <strong className="text-primary-600">
+              다음 주 ({nextWeekStart.getMonth() + 1}월 {nextWeekStart.getDate()}일 ~ {nextWeekEnd.getMonth() + 1}월 {nextWeekEnd.getDate()}일)
+            </strong> 스케줄을 수정합니다. (일요일 밤 12시까지 수정 가능)
           </p>
         </div>
 

@@ -19,8 +19,20 @@ export function getWeekStart(date: Date): string {
  * @returns DayOfWeek 타입의 요일
  */
 export function getDayOfWeek(date: Date): DayOfWeek {
+  // JavaScript의 getDay(): 0(일) ~ 6(토)
   const days: DayOfWeek[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   return days[date.getDay()];
+}
+
+/**
+ * ISO timestamp에서 UTC 기준 요일 추출
+ * @param isoTimestamp ISO 8601 형식 문자열 (예: "2025-11-22T20:00:00.000Z")
+ * @returns DayOfWeek 타입의 요일
+ */
+export function getDayOfWeekFromISO(isoTimestamp: string): DayOfWeek {
+  const date = new Date(isoTimestamp);
+  const days: DayOfWeek[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  return days[date.getUTCDay()]; // UTC 기준 요일 사용
 }
 
 /**
@@ -163,9 +175,8 @@ export function getNextWeekStart(date: Date = new Date()): string {
 export function toISOTimestamp(dateStr: string, hour: number): string {
   // 24시는 다음 날 00시로 처리
   if (hour === 24) {
-    const nextDate = new Date(dateStr + 'T00:00:00');
-    nextDate.setDate(nextDate.getDate() + 1);
-    return nextDate.toISOString().split('T')[0] + 'T00:00:00.000Z';
+    const nextDateStr = addDaysToDateString(dateStr, 1);
+    return `${nextDateStr}T00:00:00.000Z`;
   }
 
   const hourStr = hour.toString().padStart(2, '0');
@@ -194,7 +205,14 @@ export function hourFromISOTimestamp(isoTimestamp: string): number {
  * @returns YYYY-MM-DD 형식의 새 날짜 문자열
  */
 export function addDaysToDateString(dateStr: string, days: number): string {
-  const date = new Date(dateStr + 'T00:00:00');
-  date.setDate(date.getDate() + days);
-  return date.toISOString().split('T')[0];
+  // UTC 시간으로 파싱하여 시간대 문제 방지
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() + days);
+
+  // UTC 날짜를 YYYY-MM-DD 형식으로 변환
+  const resultYear = date.getUTCFullYear();
+  const resultMonth = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const resultDay = String(date.getUTCDate()).padStart(2, '0');
+  return `${resultYear}-${resultMonth}-${resultDay}`;
 }

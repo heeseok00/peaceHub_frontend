@@ -28,7 +28,7 @@ import type {
   BackendTimeBlock,
   BackendScheduleHistory,
 } from '@/types/api';
-import { toISOTimestamp, hourFromISOTimestamp, addDaysToDateString, getDayOfWeek } from '@/lib/utils/dateHelpers';
+import { toISOTimestamp, hourFromISOTimestamp, addDaysToDateString, getDayOfWeek, getDayOfWeekFromISO } from '@/lib/utils/dateHelpers';
 
 // ==================== Day of Week Conversion ====================
 
@@ -241,16 +241,9 @@ export function fromBackendSchedule(blocks: BackendTimeBlock[]): WeeklySchedule 
 
   // 백엔드 데이터로 덮어쓰기
   blocks.forEach((block) => {
-    // dayOfWeek가 있으면 사용, 없으면 startTime에서 추출
-    let day: DayOfWeek;
-
-    if (block.dayOfWeek) {
-      day = fromBackendDay(block.dayOfWeek);
-    } else {
-      // dayOfWeek가 없는 경우 startTime에서 요일 추출
-      const startDate = new Date(block.startTime);
-      day = getDayOfWeek(startDate);
-    }
+    // 항상 startTime에서 요일을 추출 (dayOfWeek 필드는 날짜와 불일치할 수 있음)
+    // UTC 기준으로 요일 추출 (시간대 변환으로 인한 오류 방지)
+    const day = getDayOfWeekFromISO(block.startTime);
 
     // day가 유효하지 않은 경우 스킵
     if (!day || !schedule[day]) {
