@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import type { User, Room } from '@/types';
-import { getCurrentUser } from '@/lib/api/endpoints';
-import { getMyRoom } from '@/lib/api/client';
+import { getCurrentUser, getMyRoom } from '@/lib/api/endpoints';
 
 /**
  * Main Layout

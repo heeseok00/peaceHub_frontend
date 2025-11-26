@@ -6,13 +6,7 @@ import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { MainLoadingSpinner } from '@/components/common/LoadingSpinner';
-import { getCurrentUser, getTasks, saveTaskPreferences } from '@/lib/api/endpoints';
-import {
-  getMyPreference,
-  getRoomPreferences,
-  getRoomMembers,
-  getMyRoom,
-} from '@/lib/api/client';
+import { getCurrentUser, getTasks, saveTaskPreferences, getRoomMembers, getMyRoom } from '@/lib/api/endpoints';
 import type { Preference, User } from '@/types';
 import type { RoomTaskWithPreferences } from '@/types/api';
 
@@ -53,10 +47,9 @@ export default function AssignPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [user, room, preference, tasksData] = await Promise.all([
+        const [user, room, tasksData] = await Promise.all([
           getCurrentUser(),
           getMyRoom(),
-          getMyPreference(),
           getTasks(), // 업무 목록 API 호출
         ]);
 
@@ -64,18 +57,8 @@ export default function AssignPage() {
         setTasks(tasksData); // 업무 목록 저장
 
         if (room) {
-          const [members, preferences] = await Promise.all([
-            getRoomMembers(room.id),
-            getRoomPreferences(room.id),
-          ]);
+          const members = await getRoomMembers(room.id);
           setRoomMembers(members);
-          setRoomPreferences(preferences);
-        }
-
-        if (preference) {
-          setExistingPreference(preference);
-          setFirst(preference.first);
-          setSecond(preference.second);
         }
       } catch (error) {
         console.error('데이터 로드 실패:', error);
@@ -153,7 +136,10 @@ export default function AssignPage() {
     setIsSubmitting(true);
 
     try {
-      await saveTaskPreferences(first, second);
+      await saveTaskPreferences([
+        { taskId: first, priority: 1 },
+        { taskId: second, priority: 2 }
+      ]);
       alert('선호도가 제출되었습니다!');
       router.push('/dashboard');
     } catch (error) {

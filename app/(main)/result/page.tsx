@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react';
 import Card from '@/components/ui/Card';
 import { MainLoadingSpinner } from '@/components/common/LoadingSpinner';
-import { getCurrentUser } from '@/lib/api/endpoints';
-import { getRoomMembers, getCurrentAssignments } from '@/lib/api/client';
-import { DAY_NAMES, TASKS } from '@/types';
+import { getCurrentUser, getRoomMembers } from '@/lib/api/endpoints';
+import { DAY_NAMES } from '@/types';
 import { formatTimeRange } from '@/lib/constants/tasks';
 import { getTaskEmoji } from '@/lib/utils/taskHelpers';
 import type { Assignment, DayOfWeek, TimeRange } from '@/types';
@@ -49,13 +48,13 @@ export default function ResultPage() {
           return;
         }
 
-        // 2. Fetch room members and current assignments in parallel
-        const [members, assignments] = await Promise.all([
-          getRoomMembers(user.roomId),
-          getCurrentAssignments(),
-        ]);
+        // 2. Fetch room members
+        const members = await getRoomMembers(user.roomId);
 
-        // 3. Calculate week start/end from assignments
+        // 3. 임시: 빈 assignments 배열 (백엔드 API 구현 대기 중)
+        const assignments: Assignment[] = [];
+
+        // 4. Calculate week start/end from assignments
         if (assignments.length > 0) {
           const weekStartStr = assignments[0].weekStart;
           const weekStart = new Date(weekStartStr);
@@ -69,7 +68,7 @@ export default function ResultPage() {
 
         setTotalTasks(assignments.length);
 
-        // 4. Group assignments by user
+        // 5. Group assignments by user
         const groupedAssignments: { [userId: string]: UserAssignment } = {};
 
         members.forEach((member) => {

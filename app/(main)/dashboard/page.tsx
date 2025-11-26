@@ -7,9 +7,6 @@ import TimelineBar from '@/components/dashboard/TimelineBar';
 import { MainLoadingSpinner } from '@/components/common/LoadingSpinner';
 import type { User, Assignment, WeeklySchedule, DayOfWeek } from '@/types';
 import { getCurrentUser, getDailySchedule, getRoomMembers, getMemberDailySchedule } from '@/lib/api/endpoints';
-import {
-  getCurrentAssignments,
-} from '@/lib/api/client';
 import { useApiData } from '@/hooks/useApiData';
 import { getDayOfWeekFromISO, hourFromISOTimestamp } from '@/lib/utils/dateHelpers';
 
@@ -38,8 +35,9 @@ export default function DashboardPage() {
     { autoFetch: !!currentUser?.roomId }
   );
 
-  // 3. Fetch assignments
-  const { data: assignments, isLoading: isLoadingAssignments } = useApiData(getCurrentAssignments);
+  // 3. Assignments (백엔드 API 구현 대기 중)
+  const assignments: Assignment[] = [];
+  const isLoadingAssignments = false;
 
   // 4. Fetch daily schedule for selected date (선택한 날짜의 스케줄 조회)
   const selectedDateStr = useMemo(

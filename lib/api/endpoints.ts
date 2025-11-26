@@ -15,9 +15,8 @@ import type {
   GetMemberDailyScheduleResponse,
   GetTasksResponse,
   RoomTaskWithPreferences,
-  PostTaskPreferencesRequest,
+  PostTaskPreferenceRequest,
   PostTaskPreferencesResponse,
-  SavedTaskPreference,
   API_BASE_URL as BASE_URL,
 } from '@/types/api';
 import {
@@ -284,10 +283,9 @@ export async function joinRoom(inviteCode: string): Promise<Room> {
 
 /**
  * 내 방 정보 조회
- * GET /api/rooms/my (구현되어 있다면)
+ * GET /api/rooms/my
  */
 export async function getMyRoom(): Promise<Room | null> {
-  // TODO: 백엔드 API 엔드포인트 확인 필요
   try {
     const response = await get<RoomResponse>('/rooms/my');
     return {
@@ -423,72 +421,13 @@ export async function getTasks(): Promise<RoomTaskWithPreferences[]> {
  * 업무 선호도 제출
  * POST /api/tasks/preferences
  * 
- * @param firstTaskId 1지망 업무 ID
- * @param secondTaskId 2지망 업무 ID
+ * @param preferences 1지망, 2지망 선호도 배열
  * @returns 저장된 선호도 정보
  */
 export async function saveTaskPreferences(
-  firstTaskId: string,
-  secondTaskId: string
-): Promise<SavedTaskPreference[]> {
-  const requestData: PostTaskPreferencesRequest = [
-    { taskId: firstTaskId, priority: 1 },
-    { taskId: secondTaskId, priority: 2 },
-  ];
-
-  const response = await post<PostTaskPreferencesResponse, PostTaskPreferencesRequest>(
-    '/tasks/preferences',
-    requestData
-  );
-
+  preferences: PostTaskPreferenceRequest[]
+): Promise<PostTaskPreferencesResponse> {
+  const response = await post<PostTaskPreferencesResponse>('/tasks/preferences', preferences);
   return response;
 }
 
-// ==================== Preferences (TODO) ====================
-
-/**
- * 내 선호도 조회
- * GET /api/preferences (구현되어 있다면)
- */
-export async function getMyPreference(): Promise<Preference | null> {
-  // TODO: 백엔드 API 명세 확인 필요
-  return null;
-}
-
-/**
- * 선호도 저장
- * POST /api/preferences (구현되어 있다면)
- */
-export async function savePreference(preference: Preference): Promise<void> {
-  // TODO: 백엔드 API 명세 확인 필요
-  await post('/preferences', preference);
-}
-
-// ==================== Assignments (TODO) ====================
-
-/**
- * 현재 배정 조회
- * GET /api/assignments/current (구현되어 있다면)
- */
-export async function getCurrentAssignments(): Promise<any> {
-  // TODO: 백엔드 API 명세 확인 필요
-  return null;
-}
-
-/**
- * 주차별 배정 조회
- * GET /api/assignments?weekStart=YYYY-MM-DD (구현되어 있다면)
- */
-export async function getAssignmentsByWeek(weekStart: string): Promise<any> {
-  // TODO: 백엔드 API 명세 확인 필요
-  return null;
-}
-
-/**
- * 내 배정 조회
- * GET /api/assignments/my (구현되어 있다면)
- */
-export async function getMyAssignments(): Promise<any[]> {
-  // TODO: 백엔드 API 명세 확인 필요
-  return [];
-}
