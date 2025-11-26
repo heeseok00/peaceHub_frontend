@@ -54,6 +54,39 @@ export interface RoomTaskWithPreferences {
  */
 export type GetTasksResponse = RoomTaskWithPreferences[];
 
+/**
+ * 선호도 제출 요청 아이템
+ */
+export interface TaskPreferenceItem {
+  taskId: string;
+  priority: number; // 1 또는 2
+}
+
+/**
+ * 선호도 제출 요청
+ * POST /api/tasks/preferences
+ */
+export type PostTaskPreferencesRequest = TaskPreferenceItem[];
+
+/**
+ * 저장된 선호도 정보
+ */
+export interface SavedTaskPreference {
+  id: string;
+  priority: number;
+  userId: string;
+  taskId: string;
+  task: {
+    title: string;
+  };
+}
+
+/**
+ * 선호도 제출 응답
+ * POST /api/tasks/preferences
+ */
+export type PostTaskPreferencesResponse = SavedTaskPreference[];
+
 // ==================== Authentication ====================
 
 /**

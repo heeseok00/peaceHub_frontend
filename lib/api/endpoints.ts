@@ -15,6 +15,9 @@ import type {
   GetMemberDailyScheduleResponse,
   GetTasksResponse,
   RoomTaskWithPreferences,
+  PostTaskPreferencesRequest,
+  PostTaskPreferencesResponse,
+  SavedTaskPreference,
   API_BASE_URL as BASE_URL,
 } from '@/types/api';
 import {
@@ -413,6 +416,31 @@ export async function getMemberDailySchedule(date: string): Promise<ScheduleBloc
  */
 export async function getTasks(): Promise<RoomTaskWithPreferences[]> {
   const response = await get<GetTasksResponse>('/tasks');
+  return response;
+}
+
+/**
+ * 업무 선호도 제출
+ * POST /api/tasks/preferences
+ * 
+ * @param firstTaskId 1지망 업무 ID
+ * @param secondTaskId 2지망 업무 ID
+ * @returns 저장된 선호도 정보
+ */
+export async function saveTaskPreferences(
+  firstTaskId: string,
+  secondTaskId: string
+): Promise<SavedTaskPreference[]> {
+  const requestData: PostTaskPreferencesRequest = [
+    { taskId: firstTaskId, priority: 1 },
+    { taskId: secondTaskId, priority: 2 },
+  ];
+
+  const response = await post<PostTaskPreferencesResponse, PostTaskPreferencesRequest>(
+    '/tasks/preferences',
+    requestData
+  );
+
   return response;
 }
 

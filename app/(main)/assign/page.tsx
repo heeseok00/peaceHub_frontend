@@ -6,10 +6,9 @@ import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { MainLoadingSpinner } from '@/components/common/LoadingSpinner';
-import { getCurrentUser, getTasks } from '@/lib/api/endpoints';
+import { getCurrentUser, getTasks, saveTaskPreferences } from '@/lib/api/endpoints';
 import {
   getMyPreference,
-  savePreference,
   getRoomPreferences,
   getRoomMembers,
   getMyRoom,
@@ -154,7 +153,7 @@ export default function AssignPage() {
     setIsSubmitting(true);
 
     try {
-      await savePreference(first, second);
+      await saveTaskPreferences(first, second);
       alert('선호도가 제출되었습니다!');
       router.push('/dashboard');
     } catch (error) {
