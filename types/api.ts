@@ -179,6 +179,25 @@ export type GetDailyScheduleResponse = (BackendTimeBlock | BackendScheduleHistor
  */
 export type GetMemberDailyScheduleResponse = BackendTimeBlock[];
 
+/**
+ * 멤버 업무 배정 조회 응답
+* GET /api/schedules/memberTask
+*/
+export interface MemberTaskSchedule {
+  id: string;
+  startTime: string; // ISO 8601
+  endTime: string; // ISO 8601
+  status: 'ACTIVE' | 'TEMPORARY';
+  type: 'TASK'; // Always TASK for this endpoint
+  roomTask: {
+    title: string;
+  };
+  user: {
+    name: string;
+  };
+}
+export type GetMemberTaskScheduleResponse = MemberTaskSchedule[];
+
 // ==================== Room Task ====================
 
 /**
