@@ -157,7 +157,35 @@ export default function Sidebar({ isOpen, onClose, user, room }: SidebarProps) {
           {/* 사용자 정보 */}
           <div className="p-6 border-b border-gray-200 bg-gray-50">
             <div className="mb-3">
-              <p className="text-sm text-gray-600">👤 {user?.realName || '사용자'}님</p>
+              <p className="text-sm text-gray-600 mb-2">👤 {user?.realName || '사용자'}님</p>
+              {user?.room?.inviteCode && (
+                <div className="bg-primary-50 border border-primary-200 rounded-lg px-3 py-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">초대 코드</span>
+                      <span className="text-lg font-bold text-primary-700 font-mono tracking-wider">
+                        {user.room.inviteCode}
+                      </span>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (user?.room?.inviteCode) {
+                          try {
+                            await navigator.clipboard.writeText(user.room.inviteCode);
+                            alert('초대 코드가 복사되었습니다!');
+                          } catch (error) {
+                            console.error('복사 실패:', error);
+                            alert('복사에 실패했습니다.');
+                          }
+                        }
+                      }}
+                      className="px-3 py-1.5 text-xs bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
+                    >
+                      복사
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 방코드 */}
