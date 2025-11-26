@@ -58,7 +58,9 @@ function groupByUser(schedules: MemberTaskSchedule[]): UserTaskGroup[] {
 
 function formatDayOfWeek(date: Date): string {
   const days = ['월', '화', '수', '목', '금', '토', '일'];
-  return days[date.getDay()];
+  const jsDay = date.getDay(); // 0=일요일, 1=월요일, ..., 6=토요일
+  const adjustedDay = jsDay === 0 ? 6 : jsDay - 1; // 월요일 기준으로 변환
+  return days[adjustedDay];
 }
 
 function formatDate(date: Date): string {
