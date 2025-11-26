@@ -1,8 +1,7 @@
 'use client';
 
 import type { Assignment, User, DayOfWeek } from '@/types';
-import { TASKS } from '@/types';
-import { TASK_EMOJIS } from '@/lib/constants/tasks';
+import { getTaskEmoji } from '@/lib/utils/taskHelpers';
 import { getDayOfWeek, getWeekStart } from '@/lib/utils/dateHelpers';
 
 /**
@@ -46,15 +45,6 @@ export default function DailyTasks({
     return user?.realName || '알 수 없음';
   };
 
-  // 집안일 정보 찾기
-  const getTaskInfo = (taskId: string) => {
-    const task = TASKS.find((t) => t.id === taskId);
-    return {
-      name: task?.name || taskId,
-      emoji: TASK_EMOJIS[taskId] || '📋',
-    };
-  };
-
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
       <div className="mb-3">
@@ -77,7 +67,7 @@ export default function DailyTasks({
       ) : (
         <div className="space-y-3">
           {filteredAssignments.map((assignment) => {
-            const taskInfo = getTaskInfo(assignment.taskId);
+            const emoji = getTaskEmoji(assignment.taskId);
             const userName = getUserName(assignment.userId);
 
             return (
@@ -86,10 +76,10 @@ export default function DailyTasks({
                 className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="text-3xl">{taskInfo.emoji}</div>
+                  <div className="text-3xl">{emoji}</div>
                   <div className="flex-1">
                     <h4 className="font-semibold text-gray-800">
-                      {taskInfo.name}
+                      {assignment.taskId}
                     </h4>
                     <p className="text-sm text-gray-600">담당자: {userName}</p>
                   </div>

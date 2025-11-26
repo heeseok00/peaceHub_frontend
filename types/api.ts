@@ -26,6 +26,34 @@ export type BackendDayOfWeek =
  */
 export type BackendTimeBlockType = 'QUIET' | 'BUSY' | 'TASK' | 'FREE';
 
+// ==================== Task ====================
+
+/**
+ * 업무 신청자 정보
+ */
+export interface TaskPreferenceUser {
+  priority: number; // 우선순위 (1 또는 2)
+  userId: string;
+  user: {
+    name: string;
+  };
+}
+
+/**
+ * 방 업무 정보 (선호도 포함)
+ */
+export interface RoomTaskWithPreferences {
+  id: string; // task ID
+  title: string; // 업무 제목
+  preferences: TaskPreferenceUser[]; // 신청자 목록
+}
+
+/**
+ * 업무 목록 조회 응답
+ * GET /api/tasks
+ */
+export type GetTasksResponse = RoomTaskWithPreferences[];
+
 // ==================== Authentication ====================
 
 /**

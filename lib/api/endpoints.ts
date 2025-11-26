@@ -13,6 +13,8 @@ import type {
   PostScheduleRequest,
   GetScheduleResponse,
   GetMemberDailyScheduleResponse,
+  GetTasksResponse,
+  RoomTaskWithPreferences,
   API_BASE_URL as BASE_URL,
 } from '@/types/api';
 import {
@@ -399,6 +401,19 @@ export async function getMemberDailySchedule(date: string): Promise<ScheduleBloc
     // 에러 발생 시 빈 배열 반환
     return [];
   }
+}
+
+// ==================== Tasks ====================
+
+/**
+ * 업무 목록 및 선호도 조회
+ * GET /api/tasks
+ * 
+ * @returns 방의 모든 업무 목록과 각 업무별 신청자 정보
+ */
+export async function getTasks(): Promise<RoomTaskWithPreferences[]> {
+  const response = await get<GetTasksResponse>('/tasks');
+  return response;
 }
 
 // ==================== Preferences (TODO) ====================

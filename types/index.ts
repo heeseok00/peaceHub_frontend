@@ -105,17 +105,7 @@ export interface Task {
   description?: string;
 }
 
-// 고정된 업무 목록
-export const TASKS: Task[] = [
-  { id: 'bathroom', name: '화장실 청소', weight: 8 },
-  { id: 'trash', name: '쓰레기 버리기', weight: 5 },
-  { id: 'vacuum', name: '청소기 돌리기', weight: 6 },
-  { id: 'laundry', name: '빨래하기', weight: 4 },
-  { id: 'dishes', name: '설거지', weight: 3 },
-  { id: 'grocery', name: '장보기', weight: 5 },
-  { id: 'fridge', name: '냉장고 관리', weight: 3 },
-  { id: 'mopping', name: '걸레질', weight: 6 },
-];
+// 업무 목록은 백엔드 API에서 가져옵니다 (GET /api/tasks)
 
 // ============================================
 // 업무 선호도 관련 타입

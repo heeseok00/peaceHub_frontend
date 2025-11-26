@@ -1,31 +1,11 @@
 /**
- * 집안일 관련 상수 (통합)
+ * 집안일 관련 상수
  *
- * TASKS, TASK_EMOJIS, TASK_TIME_RANGES를 하나의 파일로 통합
- * 재수출: types/index.ts에서도 import 가능하도록 유지
+ * UI용 이모지 매핑과 헬퍼 함수들
+ * 업무 목록은 백엔드 API (GET /api/tasks)에서 가져옵니다
  */
 
-import type { Task, TimeRange } from '@/types';
-
-// ==================== Task 정의 ====================
-
-/**
- * 집안일 목록 (가중치 포함)
- *
- * 가중치는 업무의 난이도/시간 소요를 반영:
- * - bathroom: 9 (가장 힘듦)
- * - trash: 7
- * - vacuum: 6
- * - laundry: 4
- * - dishes: 2 (가장 쉬움)
- */
-export const TASKS: Task[] = [
-  { id: 'bathroom', name: '화장실 청소', weight: 9 },
-  { id: 'trash', name: '쓰레기 버리기', weight: 7 },
-  { id: 'vacuum', name: '청소기 돌리기', weight: 6 },
-  { id: 'laundry', name: '빨래하기', weight: 4 },
-  { id: 'dishes', name: '설거지', weight: 2 },
-];
+import type { TimeRange } from '@/types';
 
 // ==================== Task 이모지 ====================
 
@@ -110,46 +90,16 @@ export function getTaskEmoji(taskId: string): string {
 }
 
 /**
- * Task ID로 전체 정보 가져오기 (이름, 이모지, 가중치, 권장시간)
+ * Task ID로 전체 정보 가져오기 (이름, 이모지, 권장시간)
  * @param taskId Task ID
- * @returns Task 정보 객체 또는 기본값
+ * @param taskName Task 이름 (API에서 받은 데이터)
+ * @returns Task 정보 객체
  */
-export function getFullTaskInfo(taskId: string) {
-  const task = TASKS.find(t => t.id === taskId);
+export function getFullTaskInfo(taskId: string, taskName?: string) {
   return {
     id: taskId,
-    name: task?.name || taskId,
-    weight: task?.weight || 0,
+    name: taskName || taskId,
     emoji: getTaskEmoji(taskId),
     timeRange: getTaskTimeRange(taskId),
   };
-}
-
-// ==================== Task 목록 유틸리티 ====================
-
-/**
- * 모든 Task ID 목록 반환
- */
-export function getAllTaskIds(): string[] {
-  return TASKS.map(t => t.id);
-}
-
-/**
- * Task를 가중치 기준으로 정렬
- * @param order 정렬 순서 ('asc' | 'desc')
- * @returns 정렬된 Task 배열
- */
-export function getSortedTasks(order: 'asc' | 'desc' = 'desc'): Task[] {
-  return [...TASKS].sort((a, b) => {
-    return order === 'desc' ? b.weight - a.weight : a.weight - b.weight;
-  });
-}
-
-/**
- * Task가 유효한지 확인
- * @param taskId Task ID
- * @returns 유효하면 true
- */
-export function isValidTask(taskId: string): boolean {
-  return TASKS.some(t => t.id === taskId);
 }

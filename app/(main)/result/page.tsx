@@ -6,7 +6,8 @@ import { MainLoadingSpinner } from '@/components/common/LoadingSpinner';
 import { getCurrentUser } from '@/lib/api/endpoints';
 import { getRoomMembers, getCurrentAssignments } from '@/lib/api/client';
 import { DAY_NAMES, TASKS } from '@/types';
-import { TASK_EMOJIS, formatTimeRange } from '@/lib/constants/tasks';
+import { formatTimeRange } from '@/lib/constants/tasks';
+import { getTaskEmoji } from '@/lib/utils/taskHelpers';
 import type { Assignment, DayOfWeek, TimeRange } from '@/types';
 
 interface UserAssignment {
@@ -82,15 +83,12 @@ export default function ResultPage() {
 
         assignments.forEach((assignment) => {
           if (groupedAssignments[assignment.userId]) {
-            const task = TASKS.find((t) => t.id === assignment.taskId);
-            if (task) {
-              groupedAssignments[assignment.userId].tasks.push({
-                taskId: task.id,
-                taskName: task.name,
-                days: assignment.days,
-                timeRange: assignment.timeRange,
-              });
-            }
+            groupedAssignments[assignment.userId].tasks.push({
+              taskId: assignment.taskId,
+              taskName: assignment.taskId, // taskId를 그대로 표시 (나중에 백엔드에서 taskName 제공 필요)
+              days: assignment.days,
+              timeRange: assignment.timeRange,
+            });
           }
         });
 
@@ -153,7 +151,7 @@ export default function ResultPage() {
                         >
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-2xl">
-                              {TASK_EMOJIS[task.taskId] || '📋'}
+                              {getTaskEmoji(task.taskId)}
                             </span>
                             <p className="font-bold text-gray-800 text-lg">
                               {task.taskName}

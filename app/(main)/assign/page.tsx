@@ -6,8 +6,7 @@ import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { MainLoadingSpinner } from '@/components/common/LoadingSpinner';
-import { TASKS } from '@/types';
-import { getCurrentUser } from '@/lib/api/endpoints';
+import { getCurrentUser, getTasks } from '@/lib/api/endpoints';
 import {
   getMyPreference,
   savePreference,
@@ -16,6 +15,7 @@ import {
   getMyRoom,
 } from '@/lib/api/client';
 import type { Preference, User } from '@/types';
+import type { RoomTaskWithPreferences } from '@/types/api';
 
 /**
  * 업무 배정 페이지
@@ -35,6 +35,9 @@ export default function AssignPage() {
   // 기존 선호도
   const [existingPreference, setExistingPreference] = useState<Preference | null>(null);
 
+  // 업무 목록 (API에서 가져온 데이터)
+  const [tasks, setTasks] = useState<RoomTaskWithPreferences[]>([]);
+
   // 룸메 데이터
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [roomMembers, setRoomMembers] = useState<User[]>([]);
@@ -51,13 +54,15 @@ export default function AssignPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [user, room, preference] = await Promise.all([
+        const [user, room, preference, tasksData] = await Promise.all([
           getCurrentUser(),
           getMyRoom(),
           getMyPreference(),
+          getTasks(), // 업무 목록 API 호출
         ]);
 
         setCurrentUser(user);
+        setTasks(tasksData); // 업무 목록 저장
 
         if (room) {
           const [members, preferences] = await Promise.all([
@@ -160,11 +165,17 @@ export default function AssignPage() {
     }
   };
 
-  // 선택 옵션 (TASKS 기반)
-  const taskOptions = TASKS.map((task) => ({
+  // 선택 옵션 (API에서 가져온 tasks 사용)
+  const taskOptions = tasks.map((task) => ({
     value: task.id,
-    label: task.name,
+    label: task.title,
   }));
+
+  // 1지망 옵션 (2지망에서 선택한 항목 제외)
+  const firstOptions = taskOptions.filter((option) => option.value !== second);
+
+  // 2지망 옵션 (1지망에서 선택한 항목 제외)
+  const secondOptions = taskOptions.filter((option) => option.value !== first);
 
   if (isLoading) {
     return <MainLoadingSpinner text="불러오는 중..." />;
@@ -196,7 +207,7 @@ export default function AssignPage() {
               1지망 (가장 하고 싶은 집안일)
             </h3>
             <Select
-              options={taskOptions}
+              options={firstOptions}
               value={first}
               onChange={(value) => {
                 setFirst(value);
@@ -206,6 +217,11 @@ export default function AssignPage() {
               placeholder="집안일을 선택하세요"
               fullWidth
             />
+            {second && (
+              <p className="text-xs text-gray-500 mt-2">
+                ⚠️ 2지망에서 선택한 "{tasks.find(t => t.id === second)?.title}"은(는) 선택할 수 없습니다
+              </p>
+            )}
           </Card>
 
           {/* 2지망 */}
@@ -214,7 +230,7 @@ export default function AssignPage() {
               2지망 (두 번째로 하고 싶은 집안일)
             </h3>
             <Select
-              options={taskOptions}
+              options={secondOptions}
               value={second}
               onChange={(value) => {
                 setSecond(value);
@@ -224,63 +240,45 @@ export default function AssignPage() {
               placeholder="집안일을 선택하세요"
               fullWidth
             />
+            {first && (
+              <p className="text-xs text-gray-500 mt-2">
+                ⚠️ 1지망에서 선택한 "{tasks.find(t => t.id === first)?.title}"은(는) 선택할 수 없습니다
+              </p>
+            )}
           </Card>
 
-          {/* 룸메들의 선호도 */}
+          {/* 룸메들의 선호도 (API 데이터 기반) */}
           <Card padding="md">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               👥 다른 룸메들의 선호도
             </h3>
             <div className="space-y-2">
-              {roomMembers
-                .filter((member) => member.id !== currentUser?.id)
-                .map((member) => {
-                  const preference = roomPreferences.find(
-                    (p) => p.userId === member.id
-                  );
-
-                  if (!preference) {
-                    return (
-                      <div
-                        key={member.id}
-                        className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded"
-                      >
-                        <span className="font-medium text-gray-800">
-                          {member.realName}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          아직 제출하지 않음
-                        </span>
-                      </div>
-                    );
-                  }
-
-                  const firstTask = TASKS.find(
-                    (t) => t.id === preference.first
-                  );
-                  const secondTask = TASKS.find(
-                    (t) => t.id === preference.second
-                  );
-
-                  return (
-                    <div
-                      key={member.id}
-                      className="flex items-center justify-between py-2 px-3 bg-green-50 rounded"
-                    >
-                      <span className="font-medium text-gray-800">
-                        {member.realName}
-                      </span>
-                      <span className="text-sm text-gray-700">
-                        1지망: {firstTask?.name}, 2지망: {secondTask?.name}
-                      </span>
+              {/* API 데이터로 각 업무별 신청자 표시 */}
+              {tasks.map((task) => {
+                if (task.preferences.length === 0) return null;
+                
+                return (
+                  <div key={task.id} className="py-2 px-3 bg-gray-50 rounded">
+                    <div className="font-medium text-gray-800 mb-2">
+                      {task.title}
                     </div>
-                  );
-                })}
+                    <div className="space-y-1 pl-4">
+                      {task.preferences.map((pref) => (
+                        <div
+                          key={pref.userId}
+                          className="text-sm text-gray-700"
+                        >
+                          {pref.priority === 1 ? '1지망' : '2지망'}: {pref.user.name}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
 
-              {roomMembers.filter((m) => m.id !== currentUser?.id).length ===
-                0 && (
+              {tasks.every((t) => t.preferences.length === 0) && (
                 <p className="text-sm text-gray-500 text-center py-4">
-                  다른 룸메가 없습니다
+                  아직 아무도 선호도를 제출하지 않았습니다
                 </p>
               )}
             </div>
