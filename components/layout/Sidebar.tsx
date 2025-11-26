@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { User, Room } from '@/types';
+import { logout } from '@/lib/api/endpoints';
+import { clearAllUserLocalData } from '@/lib/utils/userStorage';
 
 /**
  * 사이드바 컴포넌트
@@ -28,6 +30,7 @@ interface MenuItem {
 export default function Sidebar({ isOpen, onClose, user, room }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // 메뉴 항목
   const menuItems: MenuItem[] = [
@@ -80,6 +83,30 @@ export default function Sidebar({ isOpen, onClose, user, room }: SidebarProps) {
 
     router.push(path);
     onClose(); // 모바일에서 메뉴 클릭 시 닫힘
+  };
+
+  /**
+   * 로그아웃
+   */
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    const confirmed = confirm('정말 로그아웃 하시겠습니까?');
+    if (!confirmed) return;
+
+    try {
+      setIsLoggingOut(true);
+      
+      // 로컬 스토리지 클리어
+      clearAllUserLocalData();
+      
+      // 백엔드 로그아웃 & 리다이렉트
+      await logout();
+    } catch (error) {
+      console.error('로그아웃 실패:', error);
+      alert('로그아웃에 실패했습니다.');
+      setIsLoggingOut(false);
+    }
   };
 
   /**
@@ -183,12 +210,14 @@ export default function Sidebar({ isOpen, onClose, user, room }: SidebarProps) {
           {/* 하단 - 로그아웃 */}
           <div className="p-4 border-t border-gray-200">
             <button
-              onClick={() => alert('준비 중입니다')}
-              className="w-full flex items-center gap-3 px-6 py-3 text-gray-400 cursor-not-allowed"
-              disabled
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoggingOut}
             >
               <span className="text-xl">🚪</span>
-              <span className="font-medium">로그아웃</span>
+              <span className="font-medium">
+                {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+              </span>
             </button>
           </div>
         </div>
