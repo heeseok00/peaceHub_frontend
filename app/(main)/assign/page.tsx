@@ -238,34 +238,58 @@ export default function AssignPage() {
               👥 다른 룸메들의 선호도
             </h3>
             <div className="space-y-2">
-              {/* API 데이터로 각 업무별 신청자 표시 */}
-              {tasks.map((task) => {
-                if (task.preferences.length === 0) return null;
-                
-                return (
-                  <div key={task.id} className="py-2 px-3 bg-gray-50 rounded">
+              {/* 사람별로 그룹화하여 표시 */}
+              {(() => {
+                // 사람별로 선호도 데이터 그룹화
+                const userPreferences: Record<string, { 
+                  userName: string; 
+                  first?: string; 
+                  second?: string; 
+                }> = {};
+
+                tasks.forEach((task) => {
+                  task.preferences.forEach((pref) => {
+                    if (!userPreferences[pref.userId]) {
+                      userPreferences[pref.userId] = { userName: pref.user.name };
+                    }
+                    if (pref.priority === 1) {
+                      userPreferences[pref.userId].first = task.title;
+                    } else if (pref.priority === 2) {
+                      userPreferences[pref.userId].second = task.title;
+                    }
+                  });
+                });
+
+                const userList = Object.entries(userPreferences);
+
+                if (userList.length === 0) {
+                  return (
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      아직 아무도 선호도를 제출하지 않았습니다
+                    </p>
+                  );
+                }
+
+                return userList.map(([userId, data]) => (
+                  <div key={userId} className="py-2 px-3 bg-gray-50 rounded">
                     <div className="font-medium text-gray-800 mb-2">
-                      {task.title}
+                      {data.userName}
                     </div>
                     <div className="space-y-1 pl-4">
-                      {task.preferences.map((pref) => (
-                        <div
-                          key={pref.userId}
-                          className="text-sm text-gray-700"
-                        >
-                          {pref.priority === 1 ? '1지망' : '2지망'}: {pref.user.name}
+                      {data.first && (
+                        <div className="text-sm text-gray-700">
+                          1지망: {data.first}
                         </div>
-                      ))}
+                      )}
+                      {data.second && (
+                        <div className="text-sm text-gray-700">
+                          2지망: {data.second}
+                        </div>
+                      )}
                     </div>
                   </div>
-                );
-              })}
-
-              {tasks.every((t) => t.preferences.length === 0) && (
-                <p className="text-sm text-gray-500 text-center py-4">
-                  아직 아무도 선호도를 제출하지 않았습니다
-                </p>
-              )}
+                ));
+              })()}
             </div>
           </Card>
 
