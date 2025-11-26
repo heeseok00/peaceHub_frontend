@@ -56,12 +56,20 @@ export default function CombinedTimelineBar({
   // 날짜에서 요일 추출 (유틸 함수 사용)
   const dayOfWeek = getDayOfWeek(date);
 
-  // 해당 날짜의 업무 배정 가져오기
-  const getAssignmentsForDate = (): Map<string, string[]> => {
-    const result = new Map<string, string[]>();
+  // 해당 날짜의 업무 배정 가져오기 (시간대 포함)
+  const getAssignmentsForDate = (): Map<string, Array<{ taskId: string; timeRange?: { start: number; end: number } }>> => {
+    const result = new Map<string, Array<{ taskId: string; timeRange?: { start: number; end: number } }>>();
 
     // 주의 시작일 계산 (유틸 함수 사용)
     const weekStart = getWeekStart(date);
+
+    // 디버깅 로그
+    console.log('=== CombinedTimelineBar Debug ===');
+    console.log('date:', date);
+    console.log('dayOfWeek:', dayOfWeek);
+    console.log('weekStart:', weekStart);
+    console.log('all assignments:', assignments);
+    console.log('filtered assignments:', assignments.filter(a => a.weekStart === weekStart && a.days.includes(dayOfWeek)));
 
     assignments
       .filter(a => a.weekStart === weekStart && a.days.includes(dayOfWeek))
@@ -69,9 +77,13 @@ export default function CombinedTimelineBar({
         if (!result.has(a.userId)) {
           result.set(a.userId, []);
         }
-        result.get(a.userId)!.push(a.taskId);
+        result.get(a.userId)!.push({
+          taskId: a.taskId,
+          timeRange: a.timeRange,
+        });
       });
 
+    console.log('assignmentsByUser result:', Array.from(result.entries()));
     return result;
   };
 
@@ -95,12 +107,16 @@ export default function CombinedTimelineBar({
         const daySchedule = schedule[dayOfWeek];
         const slotType = daySchedule?.[hour];
 
-        // 업무 시간이 있으면 우선
-        const hasTask = assignmentsByUser.get(user.id);
-        if (hasTask && hasTask.length > 0) {
-          // 업무 시간은 특정 시간대로 가정 (18-20시)
-          // 실제로는 업무별 시간을 별도로 정의해야 함
-          if (hour >= 18 && hour <= 20) {
+        // 업무 시간이 있으면 우선 확인
+        const userTasks = assignmentsByUser.get(user.id);
+        if (userTasks && userTasks.length > 0) {
+          // 실제 배정된 업무 시간대 확인
+          const hasTaskAtHour = userTasks.some(task => {
+            if (!task.timeRange) return false;
+            return hour >= task.timeRange.start && hour < task.timeRange.end;
+          });
+          
+          if (hasTaskAtHour) {
             info.task.push(user.id);
             return;
           }
@@ -171,9 +187,25 @@ export default function CombinedTimelineBar({
             >
               <p className="font-semibold mb-1">{hour}:00 - {hour + 1}:00</p>
               {overlap.task.length > 0 && (
-                <p className="text-green-300">
-                  업무: {getUserNames(overlap.task)}
-                </p>
+                <div className="text-green-300">
+                  <p className="font-semibold mb-1">업무: {getUserNames(overlap.task)}</p>
+                  {overlap.task.map(userId => {
+                    const userTasks = assignmentsByUser.get(userId);
+                    if (userTasks && userTasks.length > 0) {
+                      const tasksAtHour = userTasks.filter(task => 
+                        task.timeRange && hour >= task.timeRange.start && hour < task.timeRange.end
+                      );
+                      if (tasksAtHour.length > 0) {
+                        return (
+                          <p key={userId} className="text-xs text-green-200">
+                            {getUserName(userId, users)}: {tasksAtHour.map(t => t.taskId).join(', ')}
+                          </p>
+                        );
+                      }
+                    }
+                    return null;
+                  })}
+                </div>
               )}
               {overlap.quiet.length > 0 && (
                 <p className="text-gray-300">

@@ -2,7 +2,7 @@
 
 import type { WeeklySchedule, Assignment, DayOfWeek } from '@/types';
 import { TimeLabels, TimelineBlocks, TimelineLegend, type TimelineBlock } from '@/components/common/TimelineRenderer';
-import { getDayOfWeek } from '@/lib/utils/dateHelpers';
+import { getDayOfWeek, getWeekStart } from '@/lib/utils/dateHelpers';
 
 /**
  * 오늘의 타임테이블 바 컴포넌트 (개선됨)
@@ -29,9 +29,34 @@ export default function TimelineBar({
   // 날짜에서 요일 추출 (유틸 함수 사용)
   const dayOfWeek = getDayOfWeek(date);
 
-  // 해당 날짜의 사용자 업무 확인
-  const userAssignments = assignments.filter((a) => a.userId === userId);
-  const hasTaskToday = userAssignments.some((a) => a.days.includes(dayOfWeek));
+  // 해당 날짜의 사용자 업무 확인 및 시간대 추출
+  const weekStart = getWeekStart(date);
+  const userAssignments = assignments.filter((a) => 
+    a.userId === userId && 
+    a.weekStart === weekStart && 
+    a.days.includes(dayOfWeek)
+  );
+  
+  // 디버깅 로그
+  console.log('=== TimelineBar Debug ===');
+  console.log('date:', date);
+  console.log('dayOfWeek:', dayOfWeek);
+  console.log('weekStart:', weekStart);
+  console.log('userId:', userId);
+  console.log('all assignments:', assignments);
+  console.log('userAssignments:', userAssignments);
+  
+  // 해당 날짜의 업무 시간대 계산
+  const taskHours = new Set<number>();
+  userAssignments.forEach((assignment) => {
+    if (assignment.timeRange) {
+      for (let hour = assignment.timeRange.start; hour < assignment.timeRange.end && hour < 24; hour++) {
+        taskHours.add(hour);
+      }
+    }
+  });
+  
+  console.log('taskHours:', Array.from(taskHours));
 
   // 타임라인 블록 생성 (시간별 칸 구분)
   const createTimelineBlocks = (): TimelineBlock[] => {
@@ -45,9 +70,25 @@ export default function TimelineBar({
       // 타입 결정: 업무 시간 > 스케줄 타입 > 비는 시간
       let type: 'quiet' | 'out' | 'task' | null = slotType;
 
-      // 업무 시간은 초록색으로 강조 (예: 저녁 시간대)
-      if (hasTaskToday && hour >= 18 && hour <= 20) {
+      // 실제 배정된 업무 시간대 확인
+      if (taskHours.has(hour)) {
         type = 'task';
+      }
+
+      // 툴팁에 업무 정보 추가
+      let tooltip = `${hour}시 - `;
+      if (type === 'task') {
+        const taskNames = userAssignments
+          .filter(a => a.timeRange && hour >= a.timeRange.start && hour < a.timeRange.end)
+          .map(a => a.taskId)
+          .join(', ');
+        tooltip += `배정된 업무: ${taskNames}`;
+      } else if (type === 'quiet') {
+        tooltip += '조용시간';
+      } else if (type === 'out') {
+        tooltip += '외출';
+      } else {
+        tooltip += '업무 가능 시간';
       }
 
       // 각 시간을 개별 블록으로 추가
@@ -55,7 +96,7 @@ export default function TimelineBar({
         startHour: hour,
         endHour: hour + 1,
         type: type,
-        tooltip: `${hour}시 - ${type === 'quiet' ? '조용시간' : type === 'out' ? '외출' : type === 'task' ? '배정된 업무' : '업무 가능 시간'}`,
+        tooltip: tooltip,
       });
     }
 

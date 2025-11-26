@@ -6,9 +6,10 @@ import CombinedTimelineBar from '@/components/dashboard/CombinedTimelineBar';
 import TimelineBar from '@/components/dashboard/TimelineBar';
 import { MainLoadingSpinner } from '@/components/common/LoadingSpinner';
 import type { User, Assignment, WeeklySchedule, DayOfWeek } from '@/types';
-import { getCurrentUser, getDailySchedule, getRoomMembers, getMemberDailySchedule } from '@/lib/api/endpoints';
+import { getCurrentUser, getDailySchedule, getRoomMembers, getMemberDailySchedule, getMemberTaskSchedule } from '@/lib/api/endpoints';
 import { useApiData } from '@/hooks/useApiData';
-import { getDayOfWeekFromISO, hourFromISOTimestamp } from '@/lib/utils/dateHelpers';
+import { getDayOfWeekFromISO, hourFromISOTimestamp, getWeekStart } from '@/lib/utils/dateHelpers';
+import type { MemberTaskSchedule } from '@/types/api';
 
 /**
  * 대시보드 페이지
@@ -35,9 +36,148 @@ export default function DashboardPage() {
     { autoFetch: !!currentUser?.roomId }
   );
 
-  // 3. Assignments (백엔드 API 구현 대기 중)
-  const assignments: Assignment[] = [];
-  const isLoadingAssignments = false;
+  // 3. Fetch assignments (배정된 업무)
+  const { data: memberTaskSchedules, isLoading: isLoadingAssignments } = useApiData(
+    getMemberTaskSchedule,
+    { autoFetch: !!currentUser?.roomId }
+  );
+
+  // 4. Convert MemberTaskSchedule[] to Assignment[]
+  const assignments = useMemo(() => {
+    // 디버깅 로그
+    console.log('=== Assignment Conversion Debug ===');
+    console.log('memberTaskSchedules:', memberTaskSchedules);
+    console.log('roomMembers:', roomMembers);
+    console.log('currentUser:', currentUser);
+
+    if (!memberTaskSchedules || memberTaskSchedules.length === 0) {
+      console.log('No memberTaskSchedules or empty array');
+      return [];
+    }
+
+    if (!currentUser?.roomId) {
+      console.log('No roomId');
+      return [];
+    }
+
+    // user.name으로 userId를 찾기 위한 맵 생성
+    const nameToUserIdMap = new Map<string, string>();
+    
+    // roomMembers가 있으면 사용
+    if (roomMembers && roomMembers.length > 0) {
+      roomMembers.forEach(member => {
+        nameToUserIdMap.set(member.realName, member.id);
+        // name 필드도 추가 (혹시 모를 경우 대비)
+        if (member.realName !== (member as any).name) {
+          nameToUserIdMap.set((member as any).name || '', member.id);
+        }
+      });
+    }
+    
+    // currentUser도 맵에 추가
+    if (currentUser) {
+      nameToUserIdMap.set(currentUser.realName, currentUser.id);
+      // currentUser의 name 필드도 추가 (혹시 모를 경우)
+      if (currentUser.realName !== (currentUser as any).name) {
+        nameToUserIdMap.set((currentUser as any).name || '', currentUser.id);
+      }
+    }
+
+    // memberTaskSchedules에서 나온 모든 user.name을 수집하여 임시 사용자 맵 생성
+    // (roomMembers가 없을 때를 대비)
+    const uniqueUserNames = new Set(memberTaskSchedules.map(s => s.user.name));
+    uniqueUserNames.forEach(userName => {
+      // 아직 맵에 없으면, currentUser와 이름이 같으면 currentUser.id 사용
+      if (!nameToUserIdMap.has(userName) && currentUser) {
+        // 이름이 정확히 일치하거나 부분 일치하면 currentUser.id 사용
+        if (userName === currentUser.realName || 
+            currentUser.realName.includes(userName) || 
+            userName.includes(currentUser.realName)) {
+          nameToUserIdMap.set(userName, currentUser.id);
+        }
+      }
+    });
+
+    console.log('nameToUserIdMap:', Array.from(nameToUserIdMap.entries()));
+    console.log('Unique user names from schedules:', Array.from(uniqueUserNames));
+
+    const converted = memberTaskSchedules
+      .map((schedule: MemberTaskSchedule): Assignment | null => {
+        const startDate = new Date(schedule.startTime);
+        const endDate = new Date(schedule.endTime);
+        
+        console.log(`Processing schedule: ${schedule.roomTask.title}, user.name: ${schedule.user.name}`);
+        
+        // user.name으로 userId 찾기
+        let userId = nameToUserIdMap.get(schedule.user.name);
+        
+        // 매칭 실패 시 부분 매칭 시도
+        if (!userId) {
+          console.warn(`Could not find userId for user.name: "${schedule.user.name}"`);
+          console.warn('Available names in map:', Array.from(nameToUserIdMap.keys()));
+          
+          // 정확한 매칭 실패 시 부분 매칭 시도
+          for (const [name, id] of nameToUserIdMap.entries()) {
+            if (name.includes(schedule.user.name) || schedule.user.name.includes(name)) {
+              userId = id;
+              console.log(`Found partial match: ${name} -> ${id}`);
+              break;
+            }
+          }
+        }
+        
+        // 여전히 매칭 실패 시, currentUser와 이름이 같으면 currentUser.id 사용
+        if (!userId && currentUser) {
+          if (schedule.user.name === currentUser.realName || 
+              schedule.user.name === (currentUser as any).name ||
+              currentUser.realName.includes(schedule.user.name) ||
+              schedule.user.name.includes(currentUser.realName)) {
+            userId = currentUser.id;
+            console.log(`Using currentUser.id: ${userId} for user.name: "${schedule.user.name}"`);
+          }
+        }
+        
+        // 최후의 수단: user.name을 해시하여 임시 userId로 사용
+        // 하지만 이 경우 타임라인에서 필터링이 안 될 수 있으므로 주의
+        if (!userId) {
+          console.warn(`Skipping schedule ${schedule.id} - userId not found for user.name: "${schedule.user.name}"`);
+          console.warn('This schedule will not appear in the timeline');
+          return null;
+        }
+
+        // weekStart 계산
+        const weekStart = getWeekStart(startDate);
+        
+        // 요일 추출
+        const day = getDayOfWeekFromISO(schedule.startTime);
+        
+        // 시간 추출
+        const startHour = hourFromISOTimestamp(schedule.startTime);
+        const endHour = hourFromISOTimestamp(schedule.endTime);
+
+        console.log(`Converted: userId=${userId}, day=${day}, timeRange=${startHour}-${endHour}, weekStart=${weekStart}`);
+
+        return {
+          id: schedule.id,
+          userId: userId,
+          roomId: currentUser.roomId || '',
+          taskId: schedule.roomTask.title,
+          days: [day],
+          timeRange: {
+            start: startHour,
+            end: endHour,
+          },
+          weekStart: weekStart,
+          createdAt: schedule.startTime,
+        };
+      })
+      .filter((a): a is Assignment => a !== null);
+
+    console.log('Final assignments:', converted);
+    console.log('Selected date:', selectedDate);
+    console.log('Selected date weekStart:', getWeekStart(selectedDate));
+    return converted;
+  }, [memberTaskSchedules, roomMembers, currentUser, selectedDate]);
 
   // 4. Fetch daily schedule for selected date (선택한 날짜의 스케줄 조회)
   const selectedDateStr = useMemo(
