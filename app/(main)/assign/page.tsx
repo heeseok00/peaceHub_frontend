@@ -283,7 +283,7 @@ export default function AssignPage() {
             variant="primary"
             size="lg"
             fullWidth
-            disabled={isSubmitting}
+            disabled={isSubmitting || !first || !second}
           >
             {isSubmitting
               ? '제출 중...'
@@ -291,6 +291,13 @@ export default function AssignPage() {
               ? '선호도 수정하기'
               : '선호도 제출하기'}
           </Button>
+          
+          {/* 선택 필수 안내 */}
+          {(!first || !second) && (
+            <p className="text-sm text-gray-500 text-center -mt-2">
+              1지망과 2지망을 모두 선택해주세요
+            </p>
+          )}
         </form>
       </div>
     </div>
