@@ -275,17 +275,10 @@ export default function AssignPage() {
                     <div className="font-medium text-gray-800 mb-2">
                       {data.userName}
                     </div>
-                    <div className="space-y-1 pl-4">
-                      {data.first && (
-                        <div className="text-sm text-gray-700">
-                          1지망: {data.first}
-                        </div>
-                      )}
-                      {data.second && (
-                        <div className="text-sm text-gray-700">
-                          2지망: {data.second}
-                        </div>
-                      )}
+                    <div className="text-sm text-gray-700 pl-4">
+                      {data.first && <span>1지망: {data.first}</span>}
+                      {data.first && data.second && <span className="mx-2 text-gray-400">|</span>}
+                      {data.second && <span>2지망: {data.second}</span>}
                     </div>
                   </div>
                 ));
