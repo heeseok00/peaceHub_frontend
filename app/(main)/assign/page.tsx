@@ -237,7 +237,7 @@ export default function AssignPage() {
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               👥 다른 룸메들의 선호도
             </h3>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {/* 사람별로 그룹화하여 표시 */}
               {(() => {
                 // 사람별로 선호도 데이터 그룹화
@@ -271,14 +271,32 @@ export default function AssignPage() {
                 }
 
                 return userList.map(([userId, data]) => (
-                  <div key={userId} className="py-2 px-3 bg-gray-50 rounded">
-                    <div className="font-medium text-gray-800 mb-2">
-                      {data.userName}
+                  <div 
+                    key={userId} 
+                    className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    {/* 사용자 이름 */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-lg">👤</span>
+                      <span className="font-semibold text-gray-900">
+                        {data.userName}
+                      </span>
                     </div>
-                    <div className="text-sm text-gray-700 pl-4">
-                      {data.first && <span>1지망: {data.first}</span>}
-                      {data.first && data.second && <span className="mx-2 text-gray-400">|</span>}
-                      {data.second && <span>2지망: {data.second}</span>}
+                    
+                    {/* 선호도 */}
+                    <div className="flex flex-wrap gap-2 pl-7">
+                      {data.first && (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-md">
+                          <span className="text-xs font-semibold text-blue-700">1지망</span>
+                          <span className="text-sm text-blue-900">{data.first}</span>
+                        </div>
+                      )}
+                      {data.second && (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md">
+                          <span className="text-xs font-semibold text-green-700">2지망</span>
+                          <span className="text-sm text-green-900">{data.second}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ));
