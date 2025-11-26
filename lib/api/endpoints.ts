@@ -361,23 +361,6 @@ export async function saveSchedule(schedule: WeeklySchedule, weekStart: string):
   // Frontend WeeklySchedule → Backend TimeBlock[] 변환
   const requestData: PostScheduleRequest = toBackendSchedule(schedule, weekStart);
 
-  // 🔍 디버깅: 실제 전송 데이터 확인
-  console.log('=== 백엔드로 전송하는 데이터 ===');
-  console.log('weekStart:', weekStart);
-  console.log('총 블록 수:', requestData.length);
-  console.log('첫 3개 블록:', requestData.slice(0, 3));
-  console.log('마지막 3개 블록:', requestData.slice(-3));
-
-  // 날짜별 그룹화하여 확인
-  const byDate: { [key: string]: number } = {};
-  requestData.forEach(block => {
-    if (block.startTime) {
-      const date = block.startTime.split('T')[0];
-      byDate[date] = (byDate[date] || 0) + 1;
-    }
-  });
-  console.log('날짜별 블록 수:', byDate);
-
   await post<void, PostScheduleRequest>('/schedules', requestData);
 }
 

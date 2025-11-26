@@ -198,13 +198,12 @@ export function toBackendSchedule(schedule: WeeklySchedule, weekStart: string): 
 
     // 마지막 블록 저장 (24시까지)
     if (currentType !== null && startHour !== null) {
-      // 24시는 다음 날 00시로 표현
-      const nextDateStr = addDaysToDateString(weekStart, dayIndex + 1);
+      // 24시는 23:59:59.999로 표현 (같은 날)
       blocks.push({
         dayOfWeek: toBackendDay(day),
         type: currentType,
         startTime: toISOTimestamp(dateStr, startHour),
-        endTime: toISOTimestamp(nextDateStr, 0),
+        endTime: toISOTimestamp(dateStr, 24), // 같은 날 24시 (23:59:59.999)
       });
     }
   });

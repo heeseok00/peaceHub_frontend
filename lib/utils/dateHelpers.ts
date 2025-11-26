@@ -33,16 +33,29 @@ export function getDayOfWeek(date: Date): DayOfWeek {
 }
 
 /**
- * ISO timestamp에서 로컬 시간 기준 요일 추출 (월요일 기준)
+ * ISO timestamp에서 UTC 날짜 기준 요일 추출 (월요일 기준)
+ * 
+ * 주의: 타임존 변환 없이 UTC 날짜 그대로 요일을 계산합니다.
+ * 예) "2025-11-24T15:00:00.000Z" → 2025-11-24(월요일)로 인식
+ * 
  * @param isoTimestamp ISO 8601 형식 문자열 (예: "2025-11-22T20:00:00.000Z")
  * @returns DayOfWeek 타입의 요일 (undefined인 경우 'mon' 반환)
  */
 export function getDayOfWeekFromISO(isoTimestamp?: string): DayOfWeek {
   if (!isoTimestamp) return 'mon';
   
-  const date = new Date(isoTimestamp);
-  // getDayOfWeek 함수 재사용 (로컬 시간 기준)
-  return getDayOfWeek(date);
+  // ISO timestamp에서 날짜 부분만 추출 (YYYY-MM-DD)
+  const dateStr = isoTimestamp.split('T')[0];
+  
+  // Date.UTC를 사용하여 타임존 변환 없이 파싱
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  
+  // UTC 기준 요일 추출
+  const days: DayOfWeek[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+  const jsDay = date.getUTCDay(); // 0=일요일, 1=월요일, ..., 6=토요일
+  const adjustedDay = jsDay === 0 ? 6 : jsDay - 1;
+  return days[adjustedDay];
 }
 
 /**
@@ -178,14 +191,13 @@ export function getNextWeekStart(date: Date = new Date()): string {
  * 예) dateStr="2025-11-24", hour=9 → "2025-11-24T09:00:00.000Z"
  *
  * @param dateStr YYYY-MM-DD 형식 날짜
- * @param hour 시간 (0-23, 24는 다음 날 00시)
+ * @param hour 시간 (0-24)
  * @returns ISO 8601 timestamp (UTC 형식)
  */
 export function toISOTimestamp(dateStr: string, hour: number): string {
-  // 24시는 다음 날 00시로 처리
+  // 24시는 같은 날 23:59:59.999로 표현 (날짜 경계 문제 해결)
   if (hour === 24) {
-    const nextDateStr = addDaysToDateString(dateStr, 1);
-    return `${nextDateStr}T00:00:00.000Z`;
+    return `${dateStr}T23:59:59.999Z`;
   }
 
   const hourStr = hour.toString().padStart(2, '0');
@@ -196,16 +208,28 @@ export function toISOTimestamp(dateStr: string, hour: number): string {
  * ISO timestamp에서 시간(hour) 추출
  *
  * UTC 시간을 그대로 추출합니다 (타임존 변환 없음).
+ * 23:59:59는 24시(다음날 시작)로 처리합니다.
  *
  * @param isoTimestamp ISO 8601 형식 문자열 (undefined인 경우 0 반환)
- * @returns 시간 (0-23)
+ * @returns 시간 (0-24)
  */
 export function hourFromISOTimestamp(isoTimestamp?: string): number {
   if (!isoTimestamp) return 0;
   
   // "2025-11-24T09:00:00.000Z" → 09
   const timePart = isoTimestamp.split('T')[1];
-  const hour = parseInt(timePart.split(':')[0], 10);
+  const hourStr = timePart.split(':')[0];
+  const hour = parseInt(hourStr, 10);
+  
+  // 23:59:59는 24시로 처리 (날짜 경계)
+  if (hour === 23) {
+    const minuteStr = timePart.split(':')[1];
+    const secondStr = timePart.split(':')[2].split('.')[0];
+    if (minuteStr === '59' && secondStr === '59') {
+      return 24;
+    }
+  }
+  
   return hour;
 }
 

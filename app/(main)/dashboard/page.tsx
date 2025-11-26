@@ -11,7 +11,7 @@ import {
   getCurrentAssignments,
 } from '@/lib/api/client';
 import { useApiData } from '@/hooks/useApiData';
-import { getDayOfWeek, hourFromISOTimestamp } from '@/lib/utils/dateHelpers';
+import { getDayOfWeekFromISO, hourFromISOTimestamp } from '@/lib/utils/dateHelpers';
 
 /**
  * 대시보드 페이지
@@ -137,8 +137,8 @@ export default function DashboardPage() {
 
       const userSchedule = scheduleMap.get(block.userId)!;
       
-      // ISO timestamp에서 요일과 시간 추출
-      const day = getDayOfWeek(new Date(block.startTime));
+      // ISO timestamp에서 요일과 시간 추출 (UTC 기준, 타임존 변환 없음)
+      const day = getDayOfWeekFromISO(block.startTime);
       const startHour = hourFromISOTimestamp(block.startTime);
       const endHour = hourFromISOTimestamp(block.endTime);
 
