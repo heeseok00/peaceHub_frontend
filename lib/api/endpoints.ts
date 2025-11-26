@@ -17,6 +17,8 @@ import type {
   RoomTaskWithPreferences,
   PostTaskPreferenceRequest,
   PostTaskPreferencesResponse,
+  MemberTaskSchedule,
+  GetMemberTaskScheduleResponse,
   API_BASE_URL as BASE_URL,
 } from '@/types/api';
 import {
@@ -431,3 +433,18 @@ export async function saveTaskPreferences(
   return response;
 }
 
+/**
+* 멤버 업무 배정 조회 (주간 배정 결과)
+* GET /api/schedules/memberTask
+*
+* @returns 방 멤버들의 업무 배정 목록 (시간순 정렬)
+*/
+export async function getMemberTaskSchedule(): Promise<MemberTaskSchedule[]> {
+try {
+  const response = await get<GetMemberTaskScheduleResponse>('/schedules/memberTask');
+  return response;
+  } catch (error) {
+    console.error('getMemberTaskSchedule error:', error);
+    return [];
+  }
+}

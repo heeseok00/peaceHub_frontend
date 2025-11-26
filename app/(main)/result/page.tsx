@@ -1,206 +1,179 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import Card from '@/components/ui/Card';
+import { useApiData } from '@/hooks/useApiData';
 import { MainLoadingSpinner } from '@/components/common/LoadingSpinner';
-import { getCurrentUser, getRoomMembers } from '@/lib/api/endpoints';
-import { DAY_NAMES } from '@/types';
-import { formatTimeRange } from '@/lib/constants/tasks';
-import { getTaskEmoji } from '@/lib/utils/taskHelpers';
-import type { Assignment, DayOfWeek, TimeRange } from '@/types';
+import Card from '@/components/ui/Card';
+import { getMemberTaskSchedule } from '@/lib/api/endpoints';
+import type { MemberTaskSchedule } from '@/types/api';
 
-interface UserAssignment {
+// ==================== Helper Functions ====================
+
+/**
+ * Group task schedules by user
+ */
+interface UserTaskGroup {
   userId: string;
   userName: string;
-  profileImage?: string;
-  tasks: {
-    taskId: string;
-    taskName: string;
-    days: DayOfWeek[];
-    timeRange?: TimeRange;
-  }[];
+  tasks: Array<{
+    id: string;
+    taskTitle: string;
+    startTime: Date;
+    endTime: Date;
+    dayOfWeek: string; // "월", "화", etc.
+    dateString: string; // "11/22"
+    timeString: string; // "09:00-11:00"
+  }>;
 }
 
-// Helper to get the start of the current week (Monday)
-const getWeekStart = (date: Date): Date => {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
-  return new Date(d.setDate(diff));
-};
+function groupByUser(schedules: MemberTaskSchedule[]): UserTaskGroup[] {
+  const grouped = new Map<string, UserTaskGroup>();
+
+  schedules.forEach((schedule) => {
+    const userName = schedule.user.name;
+
+    if (!grouped.has(userName)) {
+      grouped.set(userName, {
+        userId: userName, // Use name as ID since we don't have userId
+        userName: userName,
+        tasks: [],
+      });
+    }
+
+    const startDate = new Date(schedule.startTime);
+    const endDate = new Date(schedule.endTime);
+
+    grouped.get(userName)!.tasks.push({
+      id: schedule.id,
+      taskTitle: schedule.roomTask.title,
+      startTime: startDate,
+      endTime: endDate,
+      dayOfWeek: formatDayOfWeek(startDate),
+      dateString: formatDate(startDate),
+      timeString: formatTimeRange(startDate, endDate),
+    });
+  });
+
+  return Array.from(grouped.values());
+}
+
+function formatDayOfWeek(date: Date): string {
+  const days = ['월', '화', '수', '목', '금', '토', '일'];
+  return days[date.getDay()];
+}
+
+function formatDate(date: Date): string {
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  return `${month}/${day}`;
+}
+
+function formatTimeRange(start: Date, end: Date): string {
+  const startHour = String(start.getHours()).padStart(2, '0');
+  const startMin = String(start.getMinutes()).padStart(2, '0');
+  const endHour = String(end.getHours()).padStart(2, '0');
+  const endMin = String(end.getMinutes()).padStart(2, '0');
+  return `${startHour}:${startMin}-${endHour}:${endMin}`;
+}
+
+// ==================== Component ====================
 
 export default function ResultPage() {
-  const [assignmentsByUser, setAssignmentsByUser] = useState<UserAssignment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [week, setWeek] = useState({ start: '', end: '' });
-  const [totalTasks, setTotalTasks] = useState(0);
-
-  useEffect(() => {
-    const loadAssignmentData = async () => {
-      try {
-        setIsLoading(true);
-
-        // 1. Get current user to retrieve roomId
-        const user = await getCurrentUser();
-        if (!user || !user.roomId) {
-          console.error('User or roomId not found');
-          setIsLoading(false);
-          return;
-        }
-
-        // 2. Fetch room members
-        const members = await getRoomMembers(user.roomId);
-
-        // 3. 임시: 빈 assignments 배열 (백엔드 API 구현 대기 중)
-        const assignments: Assignment[] = [];
-
-        // 4. Calculate week start/end from assignments
-        if (assignments.length > 0) {
-          const weekStartStr = assignments[0].weekStart;
-          const weekStart = new Date(weekStartStr);
-          const weekEnd = new Date(weekStart);
-          weekEnd.setDate(weekStart.getDate() + 6);
-
-          const formatDate = (d: Date) =>
-            `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
-          setWeek({ start: formatDate(weekStart), end: formatDate(weekEnd) });
-        }
-
-        setTotalTasks(assignments.length);
-
-        // 5. Group assignments by user
-        const groupedAssignments: { [userId: string]: UserAssignment } = {};
-
-        members.forEach((member) => {
-          groupedAssignments[member.id] = {
-            userId: member.id,
-            userName: member.realName,
-            profileImage: member.profileImage,
-            tasks: [],
-          };
-        });
-
-        assignments.forEach((assignment) => {
-          if (groupedAssignments[assignment.userId]) {
-            groupedAssignments[assignment.userId].tasks.push({
-              taskId: assignment.taskId,
-              taskName: assignment.taskId, // taskId를 그대로 표시 (나중에 백엔드에서 taskName 제공 필요)
-              days: assignment.days,
-              timeRange: assignment.timeRange,
-            });
-          }
-        });
-
-        setAssignmentsByUser(Object.values(groupedAssignments));
-      } catch (error) {
-        console.error('Failed to load assignment data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadAssignmentData();
-  }, []);
+  const { data, isLoading, error } = useApiData(getMemberTaskSchedule);
 
   if (isLoading) {
-    return <MainLoadingSpinner text="결과를 불러오는 중..." />;
+    return <MainLoadingSpinner text="배정 결과를 불러오는 중..." />;
   }
+
+  if (error) {
+    return (
+      <div className="page-container">
+        <div className="text-center text-red-600">
+          <p className="text-lg font-semibold">배정 결과를 불러오지 못했습니다.</p>
+          <p className="text-sm mt-2">{error.message}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="page-container">
+        <div className="text-center text-gray-600">
+          <p className="text-lg">아직 배정된 업무가 없습니다.</p>
+          <p className="text-sm mt-2">업무 배정이 완료되면 여기에 표시됩니다.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const groupedTasks = groupByUser(data);
 
   return (
     <div className="page-container">
-      <div className="max-w-4xl mx-auto">
-        {/* 헤더 */}
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-primary-700 mb-2">
             주간 업무 배정 결과
           </h1>
-          <p className="text-gray-600 text-lg mb-2">
-            📅 {week.start} ~ {week.end}
-          </p>
-          <p className="text-primary-600 font-semibold">
-            이번 주 총 {totalTasks}개 업무 배정
-          </p>
+          <p className="text-gray-600">총 {data.length}개 업무 배정</p>
         </div>
 
-        {/* 배정 결과 목록 */}
-        <div className="space-y-6">
-          {assignmentsByUser.map((userAssignment) => (
-            <Card key={userAssignment.userId} padding="lg">
-              <div className="flex items-start gap-6">
-                {userAssignment.profileImage ? (
-                  <Image
-                    src={userAssignment.profileImage}
-                    alt={userAssignment.userName}
-                    width={80}
-                    height={80}
-                    className="rounded-full border-4 border-primary-100 shadow-md"
-                  />
-                ) : (
-                  <div className="w-20 h-20 rounded-full border-4 border-primary-100 shadow-md bg-gray-200 flex items-center justify-center text-3xl">
-                    👤
+        {/* Task List - Horizontal Layout */}
+        <div className="space-y-4">
+          {groupedTasks.map((userGroup) => (
+            <Card key={userGroup.userId} padding="lg">
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Left: User Name */}
+                <div className="md:w-32 flex-shrink-0">
+                  <div className="font-bold text-lg text-gray-800">
+                    {userGroup.userName}
                   </div>
-                )}
+                  <div className="text-sm text-gray-500 mt-1">
+                    {userGroup.tasks.length}개 업무
+                  </div>
+                </div>
+
+                {/* Right: Tasks */}
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-4">
-                    <h2 className="text-2xl font-bold text-gray-800">
-                      {userAssignment.userName}
-                    </h2>
-                    <span className="px-3 py-1 bg-primary-600 text-white text-sm font-semibold rounded-full">
-                      {userAssignment.tasks.length}개 업무
-                    </span>
-                  </div>
-                  {userAssignment.tasks.length > 0 ? (
-                    <div className="space-y-4">
-                      {userAssignment.tasks.map((task, index) => (
-                        <div
-                          key={`${task.taskId}-${index}`}
-                          className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border-l-4 border-primary-500 hover:shadow-md transition-shadow"
-                        >
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-2xl">
-                              {getTaskEmoji(task.taskId)}
-                            </span>
-                            <p className="font-bold text-gray-800 text-lg">
-                              {task.taskName}
-                            </p>
+                  <div className="space-y-3">
+                    {userGroup.tasks.map((task) => (
+                      <div
+                        key={task.id}
+                        className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      >
+                        {/* Day & Date */}
+                        <div className="sm:w-16 text-center sm:text-center flex-shrink-0">
+                          <div className="font-bold text-primary-600">
+                            {task.dayOfWeek}
                           </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            {task.days.map((day) => (
-                              <span
-                                key={day}
-                                className="px-3 py-1 bg-primary-100 text-primary-700 text-sm font-semibold rounded-full"
-                              >
-                                {DAY_NAMES[day]}
-                              </span>
-                            ))}
-                            {task.timeRange && (
-                              <span className="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-semibold rounded-full flex items-center gap-1">
-                                🕐{' '}
-                                {formatTimeRange(
-                                  task.timeRange.start,
-                                  task.timeRange.end
-                                )}
-                              </span>
-                            )}
+                          <div className="text-sm text-gray-600">
+                            {task.dateString}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-gray-500">
-                      이번 주 배정된 업무가 없습니다.
-                    </p>
-                  )}
+
+                        {/* Time */}
+                        <div className="sm:w-32 text-sm text-gray-700 flex-shrink-0">
+                          🕐 {task.timeString}
+                        </div>
+
+                        {/* Task Title */}
+                        <div className="flex-1 font-semibold text-gray-800">
+                          {task.taskTitle}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </Card>
           ))}
         </div>
 
+        {/* Footer Info */}
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-500">
-            매주 월요일 자정에 새로운 업무가 배정됩니다.
+            💡 매주 월요일에 새로운 업무가 배정됩니다.
           </p>
         </div>
       </div>
