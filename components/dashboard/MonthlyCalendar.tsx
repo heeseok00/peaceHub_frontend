@@ -1,7 +1,6 @@
 'use client';
 
 import type { Assignment, DayOfWeek } from '@/types';
-import { TASKS } from '@/types';
 import { TASK_EMOJIS } from '@/lib/constants/tasks';
 import { getDayOfWeek, getWeekStart } from '@/lib/utils/dateHelpers';
 

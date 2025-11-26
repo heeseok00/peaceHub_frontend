@@ -204,7 +204,7 @@ export default function AssignPage() {
             />
             {second && (
               <p className="text-xs text-gray-500 mt-2">
-                ⚠️ 2지망에서 선택한 "{tasks.find(t => t.id === second)?.title}"은(는) 선택할 수 없습니다
+                ⚠️ 2지망에서 선택한 &ldquo;{tasks.find(t => t.id === second)?.title}&rdquo;은(는) 선택할 수 없습니다
               </p>
             )}
           </Card>
@@ -227,7 +227,7 @@ export default function AssignPage() {
             />
             {first && (
               <p className="text-xs text-gray-500 mt-2">
-                ⚠️ 1지망에서 선택한 "{tasks.find(t => t.id === first)?.title}"은(는) 선택할 수 없습니다
+                ⚠️ 1지망에서 선택한 &ldquo;{tasks.find(t => t.id === first)?.title}&rdquo;은(는) 선택할 수 없습니다
               </p>
             )}
           </Card>

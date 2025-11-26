@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Card from '@/components/ui/Card';
 import { MainLoadingSpinner } from '@/components/common/LoadingSpinner';
 import { getCurrentUser, getRoomMembers } from '@/lib/api/endpoints';
@@ -127,11 +128,19 @@ export default function ResultPage() {
           {assignmentsByUser.map((userAssignment) => (
             <Card key={userAssignment.userId} padding="lg">
               <div className="flex items-start gap-6">
-                <img
-                  src={userAssignment.profileImage}
-                  alt={userAssignment.userName}
-                  className="w-20 h-20 rounded-full border-4 border-primary-100 shadow-md"
-                />
+                {userAssignment.profileImage ? (
+                  <Image
+                    src={userAssignment.profileImage}
+                    alt={userAssignment.userName}
+                    width={80}
+                    height={80}
+                    className="rounded-full border-4 border-primary-100 shadow-md"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-full border-4 border-primary-100 shadow-md bg-gray-200 flex items-center justify-center text-3xl">
+                    👤
+                  </div>
+                )}
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-4">
                     <h2 className="text-2xl font-bold text-gray-800">
