@@ -172,7 +172,6 @@ export default function Sidebar({ isOpen, onClose, user, room }: SidebarProps) {
                             await navigator.clipboard.writeText(user.room.inviteCode);
                             alert('초대 코드가 복사되었습니다!');
                           } catch (error) {
-                            console.error('복사 실패:', error);
                             alert('복사에 실패했습니다.');
                           }
                         }
