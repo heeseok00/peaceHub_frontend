@@ -115,8 +115,7 @@ export function useScheduleEditor(options: UseScheduleEditorOptions): UseSchedul
   const { data: schedule, isLoading, setData: setSchedule, refetch } = useApiData(
     getTemporarySchedule,
     {
-      onError: (error) => {
-        console.error('스케줄 로드 실패:', error);
+      onError: () => {
         // 로드 실패 시 빈 스케줄로 대체
         if (fallbackToEmpty) {
           setSchedule(createEmptySchedule());
@@ -132,7 +131,6 @@ export function useScheduleEditor(options: UseScheduleEditorOptions): UseSchedul
    */
   const handleSubmit = useCallback(async () => {
     if (!schedule) {
-      console.error('스케줄이 없습니다');
       return;
     }
 
@@ -150,7 +148,6 @@ export function useScheduleEditor(options: UseScheduleEditorOptions): UseSchedul
       router.push(redirectPath);
     } catch (error) {
       const err = error instanceof Error ? error : new Error('스케줄 저장 실패');
-      console.error('스케줄 저장 실패:', err);
       onSaveError?.(err);
       alert('스케줄 저장에 실패했습니다. 다시 시도해주세요.');
     } finally {

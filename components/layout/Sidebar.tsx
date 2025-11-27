@@ -67,7 +67,6 @@ export default function Sidebar({ isOpen, onClose, user, room }: SidebarProps) {
       await navigator.clipboard.writeText(room.code);
       alert('방코드가 복사되었습니다!');
     } catch (error) {
-      console.error('복사 실패:', error);
       alert('복사에 실패했습니다.');
     }
   };
@@ -103,7 +102,6 @@ export default function Sidebar({ isOpen, onClose, user, room }: SidebarProps) {
       // 백엔드 로그아웃 & 리다이렉트
       await logout();
     } catch (error) {
-      console.error('로그아웃 실패:', error);
       alert('로그아웃에 실패했습니다.');
       setIsLoggingOut(false);
     }

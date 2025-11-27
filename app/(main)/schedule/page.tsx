@@ -23,7 +23,6 @@ export default function MainSchedulePage() {
         const data = await getTemporarySchedule();
         setSchedule(data);
       } catch (error) {
-        console.error('스케줄 로드 실패:', error);
         setSchedule(createEmptySchedule());
       } finally {
         setIsLoading(false);
@@ -39,14 +38,14 @@ export default function MainSchedulePage() {
   const handleSaveChanges = async () => {
     if (!schedule) return;
 
+    const weekStart = getNextWeekStart(); // 다음 주 월요일
+
     setIsSubmitting(true);
     try {
-      const weekStart = getNextWeekStart(); // 다음 주 월요일
       await saveSchedule(schedule, weekStart);
       alert('스케줄이 성공적으로 저장되었습니다.');
       router.push('/dashboard');
     } catch (error) {
-      console.error('스케줄 저장 실패:', error);
       alert('스케줄 저장에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsSubmitting(false);

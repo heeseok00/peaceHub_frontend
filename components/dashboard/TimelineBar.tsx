@@ -36,16 +36,7 @@ export default function TimelineBar({
     a.weekStart === weekStart && 
     a.days.includes(dayOfWeek)
   );
-  
-  // 디버깅 로그
-  console.log('=== TimelineBar Debug ===');
-  console.log('date:', date);
-  console.log('dayOfWeek:', dayOfWeek);
-  console.log('weekStart:', weekStart);
-  console.log('userId:', userId);
-  console.log('all assignments:', assignments);
-  console.log('userAssignments:', userAssignments);
-  
+
   // 해당 날짜의 업무 시간대 계산
   const taskHours = new Set<number>();
   userAssignments.forEach((assignment) => {
@@ -55,8 +46,6 @@ export default function TimelineBar({
       }
     }
   });
-  
-  console.log('taskHours:', Array.from(taskHours));
 
   // 타임라인 블록 생성 (시간별 칸 구분)
   const createTimelineBlocks = (): TimelineBlock[] => {

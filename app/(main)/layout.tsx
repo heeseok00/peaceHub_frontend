@@ -35,7 +35,7 @@ export default function MainLayout({
         setUser(userData);
         setRoom(roomData);
       } catch (error) {
-        console.error('데이터 로드 실패:', error);
+        // 에러 무시 (사용자 정보 로드 실패)
       }
     };
 

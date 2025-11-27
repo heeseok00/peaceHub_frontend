@@ -61,7 +61,7 @@ export default function AssignPage() {
           setRoomMembers(members);
         }
       } catch (error) {
-        console.error('데이터 로드 실패:', error);
+        // 에러 무시 (데이터 로드 실패)
       } finally {
         setIsLoading(false);
       }
@@ -143,7 +143,6 @@ export default function AssignPage() {
       alert('선호도가 제출되었습니다!');
       router.push('/dashboard');
     } catch (error) {
-      console.error('선호도 제출 실패:', error);
       alert('제출에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsSubmitting(false);

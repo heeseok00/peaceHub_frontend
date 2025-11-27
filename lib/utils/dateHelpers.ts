@@ -195,9 +195,17 @@ export function getNextWeekStart(date: Date = new Date()): string {
  * @returns ISO 8601 timestamp (UTC 형식)
  */
 export function toISOTimestamp(dateStr: string, hour: number): string {
-  // 24시는 같은 날 23:59:59.999로 표현 (날짜 경계 문제 해결)
+  // 24시는 다음 날 00:00:00.000Z로 표현 (백엔드 validator 요구사항)
   if (hour === 24) {
-    return `${dateStr}T23:59:59.999Z`;
+    // dateStr에서 날짜를 파싱하여 +1일
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    date.setUTCDate(date.getUTCDate() + 1);
+
+    const nextYear = date.getUTCFullYear();
+    const nextMonth = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const nextDay = String(date.getUTCDate()).padStart(2, '0');
+    return `${nextYear}-${nextMonth}-${nextDay}T00:00:00.000Z`;
   }
 
   const hourStr = hour.toString().padStart(2, '0');

@@ -183,12 +183,14 @@ export function toBackendSchedule(schedule: WeeklySchedule, weekStart: string): 
         startHour = hour;
       } else if (blockType !== currentType) {
         // 타입이 바뀌면 이전 블록 저장
-        blocks.push({
+        const block = {
           dayOfWeek: toBackendDay(day),
           type: currentType,
           startTime: toISOTimestamp(dateStr, startHour!),
           endTime: toISOTimestamp(dateStr, hour),
-        });
+        };
+
+        blocks.push(block);
 
         // 새 블록 시작
         currentType = blockType;
@@ -198,13 +200,14 @@ export function toBackendSchedule(schedule: WeeklySchedule, weekStart: string): 
 
     // 마지막 블록 저장 (24시까지)
     if (currentType !== null && startHour !== null) {
-      // 24시는 23:59:59.999로 표현 (같은 날)
-      blocks.push({
+      const block = {
         dayOfWeek: toBackendDay(day),
         type: currentType,
         startTime: toISOTimestamp(dateStr, startHour),
-        endTime: toISOTimestamp(dateStr, 24), // 같은 날 24시 (23:59:59.999)
-      });
+        endTime: toISOTimestamp(dateStr, 24),
+      };
+
+      blocks.push(block);
     }
   });
 

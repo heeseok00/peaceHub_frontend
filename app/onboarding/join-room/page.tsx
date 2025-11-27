@@ -69,7 +69,6 @@ export default function JoinRoomPage() {
       setCreatedRoomCode(room.code);
       setShowSuccessModal(true);
     } catch (error) {
-      console.error('방 생성 실패:', error);
       alert('방 생성에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsSubmitting(false);
@@ -102,7 +101,6 @@ export default function JoinRoomPage() {
       // 성공 시 다음 페이지로 이동
       router.push('/onboarding/schedule');
     } catch (error) {
-      console.error('방 참여 실패:', error);
       setRoomCodeError('유효하지 않은 방 코드입니다');
     } finally {
       setIsSubmitting(false);
@@ -118,7 +116,6 @@ export default function JoinRoomPage() {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     } catch (error) {
-      console.error('복사 실패:', error);
       alert('복사에 실패했습니다');
     }
   };

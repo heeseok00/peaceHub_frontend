@@ -440,11 +440,10 @@ export async function saveTaskPreferences(
 * @returns 방 멤버들의 업무 배정 목록 (시간순 정렬)
 */
 export async function getMemberTaskSchedule(): Promise<MemberTaskSchedule[]> {
-try {
-  const response = await get<GetMemberTaskScheduleResponse>('/schedules/memberTask');
-  return response;
+  try {
+    const response = await get<GetMemberTaskScheduleResponse>('/schedules/memberTask');
+    return response;
   } catch (error) {
-    console.error('getMemberTaskSchedule error:', error);
     return [];
   }
 }

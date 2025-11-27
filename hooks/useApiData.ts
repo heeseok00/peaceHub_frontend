@@ -89,7 +89,6 @@ export function useApiData<T>(
       const error = err instanceof Error ? err : new Error('Unknown error occurred');
       setError(error);
       onError?.(error);
-      console.error('API Error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -152,7 +151,6 @@ export function useParallelApiData<T extends unknown[]>(
       const error = err instanceof Error ? err : new Error('Unknown error occurred');
       setError(error);
       onError?.(error);
-      console.error('API Error:', error);
     } finally {
       setIsLoading(false);
     }

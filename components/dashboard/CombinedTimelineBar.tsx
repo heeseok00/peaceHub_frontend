@@ -63,14 +63,6 @@ export default function CombinedTimelineBar({
     // 주의 시작일 계산 (유틸 함수 사용)
     const weekStart = getWeekStart(date);
 
-    // 디버깅 로그
-    console.log('=== CombinedTimelineBar Debug ===');
-    console.log('date:', date);
-    console.log('dayOfWeek:', dayOfWeek);
-    console.log('weekStart:', weekStart);
-    console.log('all assignments:', assignments);
-    console.log('filtered assignments:', assignments.filter(a => a.weekStart === weekStart && a.days.includes(dayOfWeek)));
-
     assignments
       .filter(a => a.weekStart === weekStart && a.days.includes(dayOfWeek))
       .forEach(a => {
@@ -83,7 +75,6 @@ export default function CombinedTimelineBar({
         });
       });
 
-    console.log('assignmentsByUser result:', Array.from(result.entries()));
     return result;
   };
 

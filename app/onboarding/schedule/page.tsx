@@ -41,7 +41,6 @@ export default function OnboardingSchedulePage() {
         // (신규 유저이므로 기존 스케줄이 없음)
         setSchedule(createEmptySchedule());
       } catch (error) {
-        console.error('스케줄 로드 실패:', error);
         setSchedule(createEmptySchedule());
       } finally {
         setIsLoading(false);
@@ -57,13 +56,13 @@ export default function OnboardingSchedulePage() {
   const handleSubmit = async () => {
     if (!schedule) return;
 
+    const weekStart = getWeekStart(new Date()); // 현재 주 월요일
+
     setIsSubmitting(true);
     try {
-      const weekStart = getWeekStart(new Date()); // 현재 주 월요일
       await saveSchedule(schedule, weekStart);
       router.push('/dashboard');
     } catch (error) {
-      console.error('스케줄 저장 실패:', error);
       alert('스케줄 저장에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsSubmitting(false);

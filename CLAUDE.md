@@ -11,15 +11,19 @@ npm run start    # Start production server
 npm run lint     # Run ESLint
 ```
 
+**Important:** Backend server must be running on port 8000 for full functionality. See [Environment Setup](#environment-setup) for details.
+
 ## Architecture Overview
 
 ### Tech Stack
 
 - **Next.js 15.1.4** with App Router
 - **React 19.0.0** with TypeScript 5
-- **Tailwind CSS 3.4.1** for styling
+- **Tailwind CSS 3.4.1** for styling (custom primary color palette: blue theme)
 - **No state management library** (React hooks only)
 - **No external UI library** (custom components)
+- **Session-based authentication** with credentials: 'include'
+- **TypeScript path alias:** `@/*` resolves to project root
 
 ### Routing Structure
 
@@ -37,26 +41,22 @@ The app uses **Next.js App Router with route groups**:
 
 ### Data Layer (API Integration)
 
-**Location:** `lib/api/endpoints.ts` and `lib/api/client.ts`
+**Location:** `lib/api/endpoints.ts`
 
-The app uses **Real backend APIs** with fallback for unimplemented endpoints:
-
-- `endpoints.ts` - **Real backend API implementation** (fully integrated)
-- `client.ts` - **Fallback layer** for backend-unimplemented APIs (returns empty data, 404 prevention)
+All API functions are centralized in `endpoints.ts`. The app communicates with the real backend, with graceful fallbacks for unimplemented endpoints.
 
 **API Function Categories:**
 
-**✅ Real APIs (use endpoints.ts):**
-- Authentication: `getCurrentUser()`, `getGoogleAuthUrl()`
-- Profile: `updateProfile(data)`
-- Room: `createRoom()`, `joinRoom()`
-- Schedule: `getActiveSchedule()`, `getTemporarySchedule()`, `saveSchedule()`, `getDailySchedule()`, `getMemberDailySchedule()`
+**✅ Fully Implemented APIs:**
+- **Authentication:** `getGoogleAuthUrl()`, `logout()`, `getCurrentUser()`
+- **Profile:** `updateProfile(data)`
+- **Room:** `createRoom()`, `joinRoom()`, `getMyRoom()`, `getRoomMembers()`
+- **Schedule:** `getActiveSchedule()`, `getTemporarySchedule()`, `saveSchedule()`, `getDailySchedule()`, `getMemberDailySchedule()`
+- **Preferences:** `getTasks()`, `saveTaskPreferences()`, `getMemberTaskSchedule()`
 
-**⏳ Fallback APIs (use client.ts - backend pending):**
-- Room: `getMyRoom()`, `getRoomMembers()` → return `null`, `[]`
-- Schedule: `getAllSchedules()` → return `new Map()`
-- Preferences: `getTasks()`, `getMyPreference()`, `savePreference()`, `getRoomPreferences()` → return empty/TASKS constant
-- Assignments: `getCurrentAssignments()`, `getAssignmentsByWeek()`, `getMyAssignments()` → return `[]`
+**Fallback Behavior:**
+- Unimplemented endpoints return empty data (e.g., `[]`, `null`) without throwing errors
+- 401/403 errors trigger automatic redirects (login/onboarding)
 
 ### Component Organization
 
@@ -81,8 +81,7 @@ hooks/
 
 lib/
 ├── api/
-│   ├── client.ts         # Fallback API (backend-unimplemented endpoints)
-│   └── endpoints.ts      # Real API (fully integrated)
+│   └── endpoints.ts      # All API functions (Real backend + fallbacks)
 ├── constants/
 │   ├── colors.ts         # Unified color schemes
 │   ├── tasks.ts          # Task constants (TASKS, EMOJIS, TIME_RANGES)
@@ -230,6 +229,21 @@ const userName = getUserName('user-1', users);
 - **SCREAMING_SNAKE_CASE** for constants
 - File names match component names
 
+### Import Conventions
+
+Always use the `@/*` path alias for imports:
+
+```typescript
+// ✅ Correct
+import { Button } from '@/components/ui/Button';
+import { getWeekStart } from '@/lib/utils/dateHelpers';
+import { User } from '@/types';
+
+// ❌ Wrong - avoid relative paths
+import { Button } from '../../../components/ui/Button';
+import { getWeekStart } from '../../lib/utils/dateHelpers';
+```
+
 ### Data Fetching Pattern (Updated - Use Hooks)
 
 **Recommended:** Use `useApiData` hook:
@@ -281,6 +295,8 @@ useEffect(() => {
 
 - **Tailwind CSS + globals.css** (prefer globals.css classes for common patterns)
 - Custom primary color palette (blue theme): `primary-50` to `primary-900`
+  - Defined in `tailwind.config.ts` with 9 shades (#f0f9ff to #0c4a6e)
+  - Use as `text-primary-500`, `bg-primary-100`, `border-primary-400`, etc.
 - **Prefer globals.css classes:**
   - `.page-container` instead of manual min-height/background
   - `.card-compact` instead of manual bg-white/rounded/shadow
@@ -308,9 +324,9 @@ useEffect(() => {
 
 ### Backend Integration Status
 
-**✅ Phase 1-4 Complete - 온보딩 API 완전 통합**
+**✅ Full Backend Integration Complete**
 
-All onboarding and main app Real APIs are fully integrated:
+All core APIs are fully integrated with the backend. All API calls use `credentials: 'include'` for session cookie handling.
 
 - **Authentication**
   - ✅ Google OAuth login (`GET /api/auth/google`)
@@ -327,8 +343,8 @@ All onboarding and main app Real APIs are fully integrated:
 - **Room**
   - ✅ Create room (`POST /api/rooms`)
   - ✅ Join room (`POST /api/rooms/join`)
-  - ⏳ Get my room (`GET /api/rooms/my`) - returns `null` (pending backend)
-  - ⏳ Get room members (`GET /api/rooms/:id/members`) - returns `[]` (pending backend)
+  - ✅ Get my room (`GET /api/rooms/my`)
+  - ✅ Get room members (`GET /api/rooms/:id/members`)
 
 - **Schedule** (ScheduleStatus: ACTIVE/TEMPORARY)
   - ✅ Get active schedule (`GET /api/schedules/activeSchedules`) - 현재 주
@@ -341,13 +357,11 @@ All onboarding and main app Real APIs are fully integrated:
     - 기존 유저: 201 + JSON body 반환
   - ✅ Get daily schedule (`GET /api/schedules/daily?date=YYYY-MM-DD`) - 날짜별 스케줄 (ACTIVE + TEMPORARY + History)
   - ✅ Get member daily schedule (`GET /api/schedules/memberDaily?date=YYYY-MM-DD`) - 방 멤버 전체 스케줄 (QUIET + TASK만)
-  - ⏳ Get all schedules - returns `new Map()` (pending backend)
 
-- **Preferences**
-  - ⏳ All APIs return empty data (pending backend)
-
-- **Assignments**
-  - ⏳ All APIs return `[]` (pending backend)
+- **Task Preferences**
+  - ✅ Get tasks with preferences (`GET /api/tasks`)
+  - ✅ Save task preferences (`POST /api/tasks/preferences`)
+  - ✅ Get member task schedule (`GET /api/tasks/member-schedule`)
 
 **Data Transformers:**
 - `lib/utils/apiTransformers.ts` handles frontend ↔ backend conversion
@@ -422,6 +436,8 @@ Before committing, verify:
 - [ ] No hardcoded colors (use globals.css classes)
 - [ ] TypeScript types properly imported
 - [ ] No console.errors in production code
+- [ ] All API calls use `credentials: 'include'` for session auth
+- [ ] Using `@/*` path alias for imports (not relative paths)
 
 ## Frontend Pages & Routes
 
@@ -512,4 +528,4 @@ cd ../front
 npm run dev
 ```
 
-**참고:** 백엔드 미구현 API는 빈 데이터를 반환하므로 백엔드 없이도 에러 없이 실행 가능합니다.
+**참고:** 일부 백엔드 미구현 API는 빈 데이터를 반환하므로 백엔드 없이도 에러 없이 실행 가능합니다.
