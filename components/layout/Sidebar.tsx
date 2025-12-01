@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { User, Room } from '@/types';
 import { logout, quitRoom } from '@/lib/api/endpoints';
@@ -32,20 +32,69 @@ export default function Sidebar({ isOpen, onClose, user, room }: SidebarProps) {
   const pathname = usePathname();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isQuittingRoom, setIsQuittingRoom] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
-  // 메뉴 항목
-  const menuItems: MenuItem[] = [
-    {
-      label: '대시보드',
-      icon: '📊',
-      path: '/dashboard',
-    },
-    {
-      label: '업무 배정',
-      icon: '📋',
-      path: '/assign',
-      badge: 'D-3일', // TODO: 실제 계산 필요
-    },
+  /**
+   * 마감 시간 계산 (다음 일요일 23:59:59)
+   * assign 페이지와 동일한 로직
+   */
+  const getDeadline = (): Date => {
+    const now = currentTime;
+    const day = now.getDay();
+    const daysUntilSunday = day === 0 ? 7 : 7 - day;
+    const deadline = new Date(now);
+    deadline.setDate(now.getDate() + daysUntilSunday);
+    deadline.setHours(23, 59, 59, 999);
+    return deadline;
+  };
+
+  /**
+   * 디데이 배지 계산 (사이드바용 - 날짜만 표시)
+   * assign 페이지의 getTimeRemaining과 동일한 로직 사용
+   */
+  const getDeadlineBadge = (): string => {
+    const deadline = getDeadline();
+    const now = currentTime;
+    const diff = deadline.getTime() - now.getTime();
+
+    if (diff <= 0) return '마감됨';
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days > 0) {
+      return `D-${days}일`;
+    } else {
+      return 'D-0일';
+    }
+  };
+
+  // 현재 시간 업데이트 (1시간마다) - assign 페이지와 동기화
+  useEffect(() => {
+    const updateTime = () => {
+      setCurrentTime(new Date());
+    };
+
+    updateTime();
+    // 1시간마다 업데이트하여 assign 페이지와 동기화
+    const interval = setInterval(updateTime, 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // 메뉴 항목 (동적으로 디데이 배지 계산)
+  const menuItems: MenuItem[] = useMemo(() => {
+    const deadlineBadge = getDeadlineBadge();
+    return [
+      {
+        label: '대시보드',
+        icon: '📊',
+        path: '/dashboard',
+      },
+      {
+        label: '업무 배정',
+        icon: '📋',
+        path: '/assign',
+        badge: deadlineBadge,
+      },
     {
       label: '시간표 설정',
       icon: '📅',
@@ -56,7 +105,8 @@ export default function Sidebar({ isOpen, onClose, user, room }: SidebarProps) {
       icon: '📈',
       path: '/result',
     },
-  ];
+    ];
+  }, [currentTime]);
 
   /**
    * 방코드 복사
