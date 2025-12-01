@@ -214,7 +214,7 @@ export default function JoinRoomPage() {
                 type="text"
                 placeholder="ABC123"
                 value={roomCode}
-                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                onChange={(e) => setRoomCode(e.target.value)}
                 error={roomCodeError}
                 fullWidth
                 required
