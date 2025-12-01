@@ -120,13 +120,20 @@ export default function Sidebar({ isOpen, onClose, user, room }: SidebarProps) {
     try {
       setIsQuittingRoom(true);
 
+      console.log('[Sidebar] Starting room quit...');
+
       // Backend 방 탈퇴 요청
       await quitRoom();
+
+      console.log('[Sidebar] Room quit successful, redirecting...');
 
       // Successful quit - redirect to join-room page
       router.push('/onboarding/join-room');
     } catch (error) {
-      alert('방 탈퇴에 실패했습니다.');
+      console.error('[Sidebar] Room quit failed:', error);
+
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
+      alert(`방 탈퇴에 실패했습니다.\n오류: ${errorMessage}`);
       setIsQuittingRoom(false);
     }
   };
