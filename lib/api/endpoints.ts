@@ -58,6 +58,42 @@ function redirectToLogin(): never {
 }
 
 /**
+ * API 호출 시작 로깅
+ * @param method API 카테고리 (Schedule, Task 등)
+ * @param endpoint API 엔드포인트
+ * @param params 요청 파라미터 (선택)
+ * @returns 시작 시간 (timestamp)
+ */
+function logApiCall(method: string, endpoint: string, params?: unknown): number {
+  const timestamp = Date.now();
+  console.log(`[${method} API] ${endpoint} - Start`, params ? { params } : '');
+  return timestamp;
+}
+
+/**
+ * API 호출 성공 로깅
+ * @param method API 카테고리
+ * @param endpoint API 엔드포인트
+ * @param startTime 시작 시간
+ * @param data 응답 데이터
+ */
+function logApiSuccess(method: string, endpoint: string, startTime: number, data: unknown): void {
+  const duration = Date.now() - startTime;
+  const size = Array.isArray(data) ? data.length : (data ? 1 : 0);
+  console.log(`[${method} API] ${endpoint} - Success (${duration}ms, ${size} items)`);
+}
+
+/**
+ * API 호출 실패 로깅
+ * @param method API 카테고리
+ * @param endpoint API 엔드포인트
+ * @param error 에러 객체
+ */
+function logApiError(method: string, endpoint: string, error: unknown): void {
+  console.error(`[${method} API] ${endpoint} - Error`, error);
+}
+
+/**
  * API 응답 처리 헬퍼
  * @param response Response 객체
  * @returns JSON 파싱된 데이터
@@ -335,12 +371,20 @@ export async function getRoomMembers(roomId: string): Promise<User[]> {
  * GET /api/schedules/activeSchedules
  */
 export async function getActiveSchedule(): Promise<WeeklySchedule> {
-  const response = await get<GetScheduleResponse>('/schedules/activeSchedules');
+  const startTime = logApiCall('Schedule', 'GET /schedules/activeSchedules');
 
-  // Backend TimeBlock[] → Frontend WeeklySchedule 변환
-  const converted = fromBackendSchedule(response);
+  try {
+    const response = await get<GetScheduleResponse>('/schedules/activeSchedules');
 
-  return converted;
+    // Backend TimeBlock[] → Frontend WeeklySchedule 변환
+    const converted = fromBackendSchedule(response);
+
+    logApiSuccess('Schedule', 'GET /schedules/activeSchedules', startTime, response);
+    return converted;
+  } catch (error) {
+    logApiError('Schedule', 'GET /schedules/activeSchedules', error);
+    throw error;
+  }
 }
 
 /**
@@ -348,12 +392,20 @@ export async function getActiveSchedule(): Promise<WeeklySchedule> {
  * GET /api/schedules/temporarySchedules
  */
 export async function getTemporarySchedule(): Promise<WeeklySchedule> {
-  const response = await get<GetScheduleResponse>('/schedules/temporarySchedules');
+  const startTime = logApiCall('Schedule', 'GET /schedules/temporarySchedules');
 
-  // Backend TimeBlock[] → Frontend WeeklySchedule 변환
-  const converted = fromBackendSchedule(response);
+  try {
+    const response = await get<GetScheduleResponse>('/schedules/temporarySchedules');
 
-  return converted;
+    // Backend TimeBlock[] → Frontend WeeklySchedule 변환
+    const converted = fromBackendSchedule(response);
+
+    logApiSuccess('Schedule', 'GET /schedules/temporarySchedules', startTime, response);
+    return converted;
+  } catch (error) {
+    logApiError('Schedule', 'GET /schedules/temporarySchedules', error);
+    throw error;
+  }
 }
 
 /**
@@ -363,10 +415,21 @@ export async function getTemporarySchedule(): Promise<WeeklySchedule> {
  * @param weekStart 해당 주의 월요일 날짜 (YYYY-MM-DD 형식)
  */
 export async function saveSchedule(schedule: WeeklySchedule, weekStart: string): Promise<void> {
-  // Frontend WeeklySchedule → Backend TimeBlock[] 변환
-  const requestData: PostScheduleRequest = toBackendSchedule(schedule, weekStart);
+  const startTime = logApiCall('Schedule', 'POST /schedules', { weekStart });
 
-  await post<void, PostScheduleRequest>('/schedules', requestData);
+  try {
+    // Frontend WeeklySchedule → Backend TimeBlock[] 변환
+    const requestData: PostScheduleRequest = toBackendSchedule(schedule, weekStart);
+
+    console.log(`[Schedule API] POST /schedules - Sending ${requestData.length} blocks for week ${weekStart}`);
+
+    await post<void, PostScheduleRequest>('/schedules', requestData);
+
+    logApiSuccess('Schedule', 'POST /schedules', startTime, requestData);
+  } catch (error) {
+    logApiError('Schedule', 'POST /schedules', error);
+    throw error;
+  }
 }
 
 /**
@@ -377,12 +440,20 @@ export async function saveSchedule(schedule: WeeklySchedule, weekStart: string):
  * @returns WeeklySchedule (해당 날짜만 포함)
  */
 export async function getDailySchedule(date: string): Promise<WeeklySchedule> {
-  const response = await get<GetScheduleResponse>(`/schedules/daily?date=${date}`);
+  const startTime = logApiCall('Schedule', 'GET /schedules/daily', { date });
 
-  // Backend TimeBlock[] → Frontend WeeklySchedule 변환
-  const converted = fromBackendSchedule(response);
+  try {
+    const response = await get<GetScheduleResponse>(`/schedules/daily?date=${date}`);
 
-  return converted;
+    // Backend TimeBlock[] → Frontend WeeklySchedule 변환
+    const converted = fromBackendSchedule(response);
+
+    logApiSuccess('Schedule', 'GET /schedules/daily', startTime, response);
+    return converted;
+  } catch (error) {
+    logApiError('Schedule', 'GET /schedules/daily', error);
+    throw error;
+  }
 }
 
 /**
@@ -393,14 +464,20 @@ export async function getDailySchedule(date: string): Promise<WeeklySchedule> {
  * @returns ScheduleBlock[] (업무 정보 포함, userId별로 그룹화되지 않음)
  */
 export async function getMemberDailySchedule(date: string): Promise<ScheduleBlock[]> {
+  const startTime = logApiCall('Schedule', 'GET /schedules/memberDaily', { date });
+
   try {
     const response = await get<GetMemberDailyScheduleResponse>(`/schedules/memberDaily?date=${date}`);
 
     // Backend TimeBlock[] → Frontend ScheduleBlock[] 변환 (업무 정보 포함)
     const converted = fromBackendScheduleBlocks(response);
 
+    logApiSuccess('Schedule', 'GET /schedules/memberDaily', startTime, response);
+    console.log(`[Schedule API] GET /schedules/memberDaily - Converted ${converted.length} blocks for ${date}`);
+
     return converted;
   } catch (error) {
+    console.warn(`[Schedule API] GET /schedules/memberDaily - Failed for ${date}, returning empty array`, error);
     // 에러 발생 시 빈 배열 반환
     return [];
   }
@@ -411,26 +488,52 @@ export async function getMemberDailySchedule(date: string): Promise<ScheduleBloc
 /**
  * 업무 목록 및 선호도 조회
  * GET /api/tasks
- * 
+ *
  * @returns 방의 모든 업무 목록과 각 업무별 신청자 정보
  */
 export async function getTasks(): Promise<RoomTaskWithPreferences[]> {
-  const response = await get<GetTasksResponse>('/tasks');
-  return response;
+  const startTime = logApiCall('Task', 'GET /tasks');
+
+  try {
+    const response = await get<GetTasksResponse>('/tasks');
+
+    const tasksWithPrefs = response.filter(t => t.preferences.length > 0).length;
+    console.log(`[Task API] GET /tasks - Success (${response.length} tasks, ${tasksWithPrefs} with preferences)`);
+    logApiSuccess('Task', 'GET /tasks', startTime, response);
+
+    return response;
+  } catch (error) {
+    logApiError('Task', 'GET /tasks', error);
+    throw error;
+  }
 }
 
 /**
  * 업무 선호도 제출
  * POST /api/tasks/preferences
- * 
+ *
  * @param preferences 1지망, 2지망 선호도 배열
  * @returns 저장된 선호도 정보
  */
 export async function saveTaskPreferences(
   preferences: PostTaskPreferenceRequest[]
 ): Promise<PostTaskPreferencesResponse> {
-  const response = await post<PostTaskPreferencesResponse>('/tasks/preferences', preferences);
-  return response;
+  const startTime = logApiCall('Task', 'POST /tasks/preferences', {
+    count: preferences.length,
+    priorities: preferences.map(p => p.priority)
+  });
+
+  try {
+    const response = await post<PostTaskPreferencesResponse>('/tasks/preferences', preferences);
+
+    console.log(`[Task API] POST /tasks/preferences - Saved ${response.length} preferences`);
+    logApiSuccess('Task', 'POST /tasks/preferences', startTime, response);
+
+    return response;
+  } catch (error) {
+    logApiError('Task', 'POST /tasks/preferences', error);
+    throw error;
+  }
 }
 
 /**
@@ -440,10 +543,20 @@ export async function saveTaskPreferences(
 * @returns 방 멤버들의 업무 배정 목록 (시간순 정렬)
 */
 export async function getMemberTaskSchedule(): Promise<MemberTaskSchedule[]> {
+  const startTime = logApiCall('Task', 'GET /schedules/memberTask');
+
   try {
     const response = await get<GetMemberTaskScheduleResponse>('/schedules/memberTask');
+
+    const uniqueUsers = new Set(response.map(s => s.user.name)).size;
+    const uniqueTasks = new Set(response.map(s => s.roomTask.title)).size;
+
+    console.log(`[Task API] GET /schedules/memberTask - Success (${response.length} assignments, ${uniqueUsers} users, ${uniqueTasks} tasks)`);
+    logApiSuccess('Task', 'GET /schedules/memberTask', startTime, response);
+
     return response;
   } catch (error) {
+    console.warn('[Task API] GET /schedules/memberTask - Failed, returning empty array', error);
     return [];
   }
 }

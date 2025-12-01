@@ -160,6 +160,8 @@ export function minutesToTimeString(minutes: number): string {
  * @returns Backend TimeBlock 배열 (요일, 시간 순 정렬)
  */
 export function toBackendSchedule(schedule: WeeklySchedule, weekStart: string): BackendTimeBlock[] {
+  console.log(`[Transform] toBackendSchedule - Start (weekStart: ${weekStart})`);
+
   const blocks: BackendTimeBlock[] = [];
   const days: DayOfWeek[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
@@ -211,6 +213,13 @@ export function toBackendSchedule(schedule: WeeklySchedule, weekStart: string): 
     }
   });
 
+  const typeCount: Record<string, number> = {};
+  blocks.forEach(b => {
+    typeCount[b.type] = (typeCount[b.type] || 0) + 1;
+  });
+
+  console.log(`[Transform] toBackendSchedule - Success (${blocks.length} blocks, types: ${JSON.stringify(typeCount)})`);
+
   return blocks;
 }
 
@@ -221,6 +230,8 @@ export function toBackendSchedule(schedule: WeeklySchedule, weekStart: string): 
  * @returns Frontend WeeklySchedule
  */
 export function fromBackendSchedule(blocks: BackendTimeBlock[]): WeeklySchedule {
+  console.log(`[Transform] fromBackendSchedule - Start (${blocks.length} blocks)`);
+
   const days: DayOfWeek[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
   // 모든 요일, 모든 시간을 null(FREE)로 초기화
@@ -246,9 +257,13 @@ export function fromBackendSchedule(blocks: BackendTimeBlock[]): WeeklySchedule 
     // startTime, endTime 사용
     const startTimeStr = block.startTime;
     const endTimeStr = block.endTime;
-    
+
     if (!startTimeStr || !endTimeStr) {
-      console.warn('Missing startTime/endTime in block:', block);
+      console.warn('[Transform] fromBackendSchedule - Missing startTime/endTime in block:', {
+        id: block.id,
+        type: block.type,
+        dayOfWeek: block.dayOfWeek
+      });
       return;
     }
 
@@ -257,7 +272,12 @@ export function fromBackendSchedule(blocks: BackendTimeBlock[]): WeeklySchedule 
 
     // day가 유효하지 않은 경우 스킵
     if (!day || !schedule[day]) {
-      console.warn('Invalid day from block:', block);
+      console.warn('[Transform] fromBackendSchedule - Invalid day from block:', {
+        id: block.id,
+        startTime: startTimeStr,
+        extractedDay: day,
+        dayOfWeek: block.dayOfWeek
+      });
       return;
     }
 
@@ -270,6 +290,17 @@ export function fromBackendSchedule(blocks: BackendTimeBlock[]): WeeklySchedule 
       schedule[day][hour] = slot;
     }
   });
+
+  // 각 요일별로 채워진 시간 개수 계산
+  const filledHours = days.reduce((acc, day) => {
+    const filled = Object.values(schedule[day]).filter(slot => slot !== null).length;
+    if (filled > 0) {
+      acc[day] = filled;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  console.log(`[Transform] fromBackendSchedule - Success (filled hours by day: ${JSON.stringify(filledHours)})`);
 
   return schedule;
 }
@@ -291,6 +322,8 @@ export function fromBackendSchedule(blocks: BackendTimeBlock[]): WeeklySchedule 
 export function validateBackendSchedule(
   blocks: BackendTimeBlock[]
 ): { valid: boolean; error?: string } {
+  console.log(`[Transform] validateBackendSchedule - Start (${blocks.length} blocks)`);
+
   const days: BackendDayOfWeek[] = [
     'MONDAY',
     'TUESDAY',
@@ -319,22 +352,30 @@ export function validateBackendSchedule(
 
       // 시간 범위 검증
       if (startHour < 0 || startHour >= 24) {
-        return { valid: false, error: `Invalid start hour: ${startHour}` };
+        const error = `Invalid start hour: ${startHour}`;
+        console.error(`[Transform] validateBackendSchedule - Failed: ${error}`);
+        return { valid: false, error };
       }
       if (endHour <= 0 || endHour > 24) {
-        return { valid: false, error: `Invalid end hour: ${endHour}` };
+        const error = `Invalid end hour: ${endHour}`;
+        console.error(`[Transform] validateBackendSchedule - Failed: ${error}`);
+        return { valid: false, error };
       }
 
       // endTime > startTime 검증
       if (endHour <= startHour) {
-        return { valid: false, error: 'endTime must be greater than startTime' };
+        const error = 'endTime must be greater than startTime';
+        console.error(`[Transform] validateBackendSchedule - Failed: ${error}`);
+        return { valid: false, error };
       }
 
       // 공백 검증
       if (startHour !== expectedHour) {
+        const error = `Time gap detected on ${day} at ${expectedHour}:00`;
+        console.error(`[Transform] validateBackendSchedule - Failed: ${error}`);
         return {
           valid: false,
-          error: `Time gap detected on ${day} at ${expectedHour}:00`,
+          error,
         };
       }
 
@@ -343,13 +384,16 @@ export function validateBackendSchedule(
 
     // 24시간 전체 커버 검증 (마지막 블록의 endHour는 다음 날 00시일 수 있음)
     if (expectedHour !== 24 && expectedHour !== 0) {
+      const error = `${day} does not cover full 24 hours (ends at ${expectedHour}:00)`;
+      console.error(`[Transform] validateBackendSchedule - Failed: ${error}`);
       return {
         valid: false,
-        error: `${day} does not cover full 24 hours (ends at ${expectedHour}:00)`,
+        error,
       };
     }
   }
 
+  console.log('[Transform] validateBackendSchedule - Success (all validations passed)');
   return { valid: true };
 }
 
@@ -393,7 +437,16 @@ export function fromBackendScheduleBlock(block: BackendTimeBlock): ScheduleBlock
  * @returns Frontend ScheduleBlock 배열
  */
 export function fromBackendScheduleBlocks(blocks: BackendTimeBlock[]): ScheduleBlock[] {
-  return blocks.map(fromBackendScheduleBlock);
+  console.log(`[Transform] fromBackendScheduleBlocks - Start (${blocks.length} blocks)`);
+
+  const result = blocks.map(fromBackendScheduleBlock);
+
+  const taskBlocks = result.filter(b => b.type === 'task').length;
+  const quietBlocks = result.filter(b => b.type === 'quiet').length;
+
+  console.log(`[Transform] fromBackendScheduleBlocks - Success (${result.length} blocks: ${taskBlocks} task, ${quietBlocks} quiet)`);
+
+  return result;
 }
 
 /**
