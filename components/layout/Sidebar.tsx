@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { User, Room } from '@/types';
-import { logout, quitRoom, getMyRoom } from '@/lib/api/endpoints';
+import { logout, quitRoom } from '@/lib/api/endpoints';
 import { clearAllUserLocalData } from '@/lib/utils/userStorage';
 
 /**
@@ -114,25 +114,11 @@ export default function Sidebar({ isOpen, onClose, user, room }: SidebarProps) {
   const handleQuitRoom = async () => {
     if (isQuittingRoom) return;
 
+    const confirmed = confirm('방을 탈퇴하시겠습니까?');
+    if (!confirmed) return;
+
     try {
       setIsQuittingRoom(true);
-
-      // Fetch room info to check ownership
-      const roomData = await getMyRoom();
-
-      // Determine if user is room owner
-      const isRoomOwner = user?.id === roomData?.ownerId;
-
-      // Show appropriate confirmation message
-      const message = isRoomOwner
-        ? '방장이 방을 탈퇴하면 방이 삭제됩니다. 정말 탈퇴하시겠습니까?'
-        : '방을 탈퇴하시겠습니까?';
-
-      const confirmed = confirm(message);
-      if (!confirmed) {
-        setIsQuittingRoom(false);
-        return;
-      }
 
       // Backend 방 탈퇴 요청
       await quitRoom();
