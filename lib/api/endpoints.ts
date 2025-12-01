@@ -375,7 +375,15 @@ export async function quitRoom(): Promise<void> {
   const startTime = logApiCall('Room', 'DELETE /rooms/quit');
 
   try {
-    await del<void>('/rooms/quit');
+    // Timeout을 위한 Promise race
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Request timeout')), 10000)
+    );
+
+    const deletePromise = del<void>('/rooms/quit');
+
+    await Promise.race([deletePromise, timeoutPromise]);
+
     logApiSuccess('Room', 'DELETE /rooms/quit', startTime, null);
   } catch (error) {
     logApiError('Room', 'DELETE /rooms/quit', error);
