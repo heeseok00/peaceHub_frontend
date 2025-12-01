@@ -364,6 +364,25 @@ export async function getRoomMembers(roomId: string): Promise<User[]> {
   }
 }
 
+/**
+ * 방 탈퇴
+ * DELETE /api/rooms/quit
+ *
+ * @throws 401 Unauthorized - 로그인 필요
+ * @throws 403 Forbidden - 방 미참여 (이 경우 onboarding으로 자동 리디렉션)
+ */
+export async function quitRoom(): Promise<void> {
+  const startTime = logApiCall('Room', 'DELETE /rooms/quit');
+
+  try {
+    await del<void>('/rooms/quit');
+    logApiSuccess('Room', 'DELETE /rooms/quit', startTime, null);
+  } catch (error) {
+    logApiError('Room', 'DELETE /rooms/quit', error);
+    throw error;
+  }
+}
+
 // ==================== Schedule ====================
 
 /**

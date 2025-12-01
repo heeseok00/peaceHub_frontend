@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { User, Room } from '@/types';
-import { logout } from '@/lib/api/endpoints';
+import { logout, quitRoom, getMyRoom } from '@/lib/api/endpoints';
 import { clearAllUserLocalData } from '@/lib/utils/userStorage';
 
 /**
@@ -31,6 +31,7 @@ export default function Sidebar({ isOpen, onClose, user, room }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isQuittingRoom, setIsQuittingRoom] = useState(false);
 
   // 메뉴 항목
   const menuItems: MenuItem[] = [
@@ -95,15 +96,52 @@ export default function Sidebar({ isOpen, onClose, user, room }: SidebarProps) {
 
     try {
       setIsLoggingOut(true);
-      
+
       // 로컬 스토리지 클리어
       clearAllUserLocalData();
-      
+
       // 백엔드 로그아웃 & 리다이렉트
       await logout();
     } catch (error) {
       alert('로그아웃에 실패했습니다.');
       setIsLoggingOut(false);
+    }
+  };
+
+  /**
+   * 방 탈퇴
+   */
+  const handleQuitRoom = async () => {
+    if (isQuittingRoom) return;
+
+    try {
+      setIsQuittingRoom(true);
+
+      // Fetch room info to check ownership
+      const roomData = await getMyRoom();
+
+      // Determine if user is room owner
+      const isRoomOwner = user?.id === roomData?.ownerId;
+
+      // Show appropriate confirmation message
+      const message = isRoomOwner
+        ? '방장이 방을 탈퇴하면 방이 삭제됩니다. 정말 탈퇴하시겠습니까?'
+        : '방을 탈퇴하시겠습니까?';
+
+      const confirmed = confirm(message);
+      if (!confirmed) {
+        setIsQuittingRoom(false);
+        return;
+      }
+
+      // Backend 방 탈퇴 요청
+      await quitRoom();
+
+      // Successful quit - redirect to join-room page
+      router.push('/onboarding/join-room');
+    } catch (error) {
+      alert('방 탈퇴에 실패했습니다.');
+      setIsQuittingRoom(false);
     }
   };
 
@@ -231,6 +269,22 @@ export default function Sidebar({ isOpen, onClose, user, room }: SidebarProps) {
               );
             })}
           </nav>
+
+          {/* 방 탈퇴 버튼 - 방에 속해있을 때만 표시 */}
+          {user?.room && (
+            <div className="p-4 border-t border-gray-200">
+              <button
+                onClick={handleQuitRoom}
+                className="w-full flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isQuittingRoom}
+              >
+                <span className="text-xl">🚶</span>
+                <span className="font-medium">
+                  {isQuittingRoom ? '탈퇴 중...' : '방 탈퇴'}
+                </span>
+              </button>
+            </div>
+          )}
 
           {/* 하단 - 로그아웃 */}
           <div className="p-4 border-t border-gray-200">
