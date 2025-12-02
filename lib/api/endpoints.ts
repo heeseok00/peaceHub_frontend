@@ -464,19 +464,29 @@ export async function saveSchedule(schedule: WeeklySchedule, weekStart: string):
  * GET /api/schedules/daily?date=YYYY-MM-DD
  *
  * @param date 조회할 날짜 (YYYY-MM-DD 형식)
- * @returns WeeklySchedule (해당 날짜만 포함)
+ * @returns { schedule: WeeklySchedule, blocks: ScheduleBlock[] }
+ *          - schedule: QUIET, BUSY만 포함된 WeeklySchedule
+ *          - blocks: TASK 정보를 포함한 ScheduleBlock 배열
  */
-export async function getDailySchedule(date: string): Promise<WeeklySchedule> {
+export async function getDailySchedule(date: string): Promise<{
+  schedule: WeeklySchedule;
+  blocks: ScheduleBlock[];
+}> {
   const startTime = logApiCall('Schedule', 'GET /schedules/daily', { date });
 
   try {
     const response = await get<GetScheduleResponse>(`/schedules/daily?date=${date}`);
 
-    // Backend TimeBlock[] → Frontend WeeklySchedule 변환
-    const converted = fromBackendSchedule(response);
+    // WeeklySchedule 변환 (QUIET, BUSY만 포함, TASK는 null로 변환됨)
+    const schedule = fromBackendSchedule(response);
+
+    // ScheduleBlock 변환 (TASK 정보 포함)
+    const blocks = fromBackendScheduleBlocks(response);
 
     logApiSuccess('Schedule', 'GET /schedules/daily', startTime, response);
-    return converted;
+    console.log(`[Schedule API] GET /schedules/daily - Returning ${blocks.length} blocks for ${date}`);
+
+    return { schedule, blocks };
   } catch (error) {
     logApiError('Schedule', 'GET /schedules/daily', error);
     throw error;

@@ -6,7 +6,7 @@ import CombinedTimelineBar from '@/components/dashboard/CombinedTimelineBar';
 import TimelineBar from '@/components/dashboard/TimelineBar';
 import { MainLoadingSpinner } from '@/components/common/LoadingSpinner';
 import type { User, Assignment, WeeklySchedule, DayOfWeek } from '@/types';
-import { getCurrentUser, getDailySchedule, getRoomMembers, getMemberDailySchedule, getMemberTaskSchedule } from '@/lib/api/endpoints';
+import { getCurrentUser, getRoomMembers, getMemberDailySchedule, getMemberTaskSchedule } from '@/lib/api/endpoints';
 import { useApiData } from '@/hooks/useApiData';
 import { getDayOfWeekFromISO, hourFromISOTimestamp, getWeekStart } from '@/lib/utils/dateHelpers';
 import type { MemberTaskSchedule } from '@/types/api';
@@ -160,16 +160,6 @@ export default function DashboardPage() {
     [selectedDate]
   );
 
-  const getDailyScheduleCallback = useCallback(
-    () => getDailySchedule(selectedDateStr),
-    [selectedDateStr]
-  );
-
-  const { data: mySchedule, isLoading: isLoadingMySchedule } = useApiData(
-    getDailyScheduleCallback,
-    { autoFetch: !!currentUser }
-  );
-
   // 5. Fetch all members' schedules for selected date (통합 타임라인용)
   const getMemberSchedulesCallback = useCallback(
     () => getMemberDailySchedule(selectedDateStr),
@@ -181,6 +171,12 @@ export default function DashboardPage() {
     { autoFetch: !!currentUser?.roomId }
   );
 
+  // memberScheduleBlocks에서 현재 사용자 것만 필터링
+  const myScheduleBlocks = useMemo(() => {
+    if (!memberScheduleBlocks || !currentUser) return [];
+    return memberScheduleBlocks.filter(block => block.userId === currentUser.id);
+  }, [memberScheduleBlocks, currentUser]);
+
   // 6. 사용자 목록 생성 (memberScheduleBlocks 이후)
   const displayUsers = useMemo(() => {
     // 1. roomMembers가 있으면 사용
@@ -191,16 +187,22 @@ export default function DashboardPage() {
     // 2. memberScheduleBlocks에서 userId 추출하여 사용자 목록 생성
     if (memberScheduleBlocks && memberScheduleBlocks.length > 0) {
       const userIds = Array.from(new Set(memberScheduleBlocks.map(b => b.userId)));
-      
-      // userId만 가진 임시 User 객체 생성
-      return userIds.map(userId => ({
-        id: userId,
-        email: '',
-        realName: userId === currentUser?.id ? currentUser.realName : `사용자 ${userId.substring(0, 8)}`,
-        country: '',
-        language: '',
-        createdAt: '',
-      }));
+
+      // userId만 가진 임시 User 객체 생성 (userName을 realName으로 매핑)
+      return userIds.map(userId => {
+        // 해당 userId의 첫 번째 블록에서 userName 가져오기
+        const userBlock = memberScheduleBlocks.find(b => b.userId === userId);
+        const realName = userBlock?.userName || `사용자 ${userId.substring(0, 8)}`;
+
+        return {
+          id: userId,
+          email: '',
+          realName, // userName을 realName으로 매핑
+          country: '',
+          language: '',
+          createdAt: '',
+        };
+      });
     }
     
     // 3. 아무것도 없으면 currentUser만
@@ -212,10 +214,6 @@ export default function DashboardPage() {
     const scheduleMap = new Map<string, WeeklySchedule>();
 
     if (!memberScheduleBlocks || memberScheduleBlocks.length === 0) {
-      // 멤버 스케줄이 없으면 내 스케줄만 사용
-      if (currentUser && mySchedule) {
-        scheduleMap.set(currentUser.id, mySchedule);
-      }
       return scheduleMap;
     }
 
@@ -250,11 +248,11 @@ export default function DashboardPage() {
         }
       }
     });
-    
-    return scheduleMap;
-  }, [memberScheduleBlocks, currentUser, mySchedule]);
 
-  const isLoading = isLoadingUser || isLoadingMembers || isLoadingAssignments || isLoadingMySchedule || isLoadingMemberSchedules;
+    return scheduleMap;
+  }, [memberScheduleBlocks, currentUser]);
+
+  const isLoading = isLoadingUser || isLoadingMembers || isLoadingAssignments || isLoadingMemberSchedules;
   const error = userError;
 
   const handleDateClick = (date: Date) => {
@@ -317,12 +315,18 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          {/* 통합 타임라인 (모두) */}
+          {/* allSchedules에서 현재 사용자 스케줄 가져오기 */}
+          {(() => {
+            const mySchedule = currentUser ? allSchedules.get(currentUser.id) : undefined;
+
+            return (
+              <>
+                {/* 통합 타임라인 (모두) */}
           {allSchedules && displayUsers && displayUsers.length > 0 && (
             <CombinedTimelineBar
               date={selectedDate}
               allSchedules={allSchedules}
-              assignments={assignments || []}
+              memberTaskBlocks={memberScheduleBlocks || []}
               users={displayUsers}
             />
           )}
@@ -332,10 +336,13 @@ export default function DashboardPage() {
             <TimelineBar
               date={selectedDate}
               schedule={mySchedule}
-              assignments={assignments || []}
+              myTaskBlocks={myScheduleBlocks}
               userId={currentUser.id}
             />
           )}
+              </>
+            );
+          })()}
         </div>
       </div>
     </div>

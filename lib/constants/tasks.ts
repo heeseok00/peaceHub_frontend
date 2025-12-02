@@ -90,6 +90,38 @@ export function getTaskEmoji(taskId: string): string {
 }
 
 /**
+ * 한글 업무 제목으로 이모지 가져오기
+ * @param title 한글 업무 제목 (예: "화장실 청소", "설거지")
+ * @returns 이모지 문자열 또는 기본값 '📋'
+ */
+export function getTaskEmojiByTitle(title: string): string {
+  const lowerTitle = title.toLowerCase().trim();
+
+  // 화장실 청소 (화장실이 포함되면 우선 처리)
+  if (lowerTitle.includes('화장실') || lowerTitle.includes('bathroom')) {
+    return TASK_EMOJIS.bathroom;
+  }
+  // 쓰레기 버리기
+  if (lowerTitle.includes('쓰레기') || lowerTitle.includes('trash')) {
+    return TASK_EMOJIS.trash;
+  }
+  // 빨래하기
+  if (lowerTitle.includes('빨래') || lowerTitle.includes('laundry')) {
+    return TASK_EMOJIS.laundry;
+  }
+  // 설거지
+  if (lowerTitle.includes('설거지') || lowerTitle.includes('dishes') || lowerTitle.includes('dish')) {
+    return TASK_EMOJIS.dishes;
+  }
+  // 청소기 돌리기 (마지막에 체크, 화장실 청소와 구분)
+  if (lowerTitle.includes('청소기') || lowerTitle.includes('vacuum') || lowerTitle.includes('청소')) {
+    return TASK_EMOJIS.vacuum;
+  }
+
+  return '📋'; // 기본값
+}
+
+/**
  * Task ID로 전체 정보 가져오기 (이름, 이모지, 권장시간)
  * @param taskId Task ID
  * @param taskName Task 이름 (API에서 받은 데이터)

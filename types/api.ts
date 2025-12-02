@@ -144,6 +144,9 @@ export interface BackendTimeBlock {
 
   status?: 'ACTIVE' | 'TEMPORARY'; // 스케줄 상태 (응답 시)
   userId?: string; // 사용자 ID (응답 시)
+  user?: {
+    name: string; // 사용자 이름
+  }; // 사용자 정보 (응답 시)
   roomTaskId?: string; // TASK 타입일 경우 업무 ID (응답 시)
   roomTask?: {
     title: string; // 업무 이름

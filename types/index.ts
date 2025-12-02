@@ -197,6 +197,7 @@ export interface ScheduleBlock {
   endTime: string; // ISO 8601 timestamp
   status: ScheduleStatus; // ACTIVE | TEMPORARY
   userId: string;
+  userName?: string; // 사용자 이름 (user.name)
   // TASK 타입일 경우의 업무 정보
   taskInfo?: {
     roomTaskId: string;

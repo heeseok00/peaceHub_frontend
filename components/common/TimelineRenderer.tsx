@@ -150,7 +150,6 @@ export function TimelineBlocks({
           !readOnly ? 'cursor-pointer transition-opacity hover:opacity-80' : ''
         }`}
         style={{ flex: width }}
-        title={block.tooltip}
         onClick={() => !readOnly && onCellClick?.(block.startHour)}
         onMouseDown={() => !readOnly && onCellMouseDown?.(block.startHour)}
         onMouseEnter={() => !readOnly && onCellMouseEnter?.(block.startHour)}

@@ -410,7 +410,7 @@ export function fromBackendScheduleBlock(block: BackendTimeBlock): ScheduleBlock
   // startTime, endTime 사용
   const startTime = block.startTime || '';
   const endTime = block.endTime || '';
-  
+
   return {
     id: block.id || '',
     type: fromBackendBlockType(block.type),
@@ -418,6 +418,7 @@ export function fromBackendScheduleBlock(block: BackendTimeBlock): ScheduleBlock
     endTime,
     status: block.status || 'ACTIVE',
     userId: block.userId || '',
+    userName: block.user?.name, // user.name 추출
     taskInfo:
       block.type === 'TASK' && block.roomTask
         ? {
