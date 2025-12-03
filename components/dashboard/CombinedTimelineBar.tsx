@@ -72,7 +72,12 @@ export default function CombinedTimelineBar({
       .forEach(block => {
         const userId = block.userId; // userName 대신 userId 사용
         const startHour = hourFromISOTimestamp(block.startTime);
-        const endHour = hourFromISOTimestamp(block.endTime);
+        let endHour = hourFromISOTimestamp(block.endTime);
+
+        // 다음날 00시 예외처리
+        if (endHour === 0) {
+          endHour = 24;
+        }
 
         if (!result.has(userId)) {
           result.set(userId, new Map());
@@ -237,7 +242,13 @@ export default function CombinedTimelineBar({
                       const title = block.taskInfo?.title || '업무';
                       const emoji = getTaskEmojiByTitle(title);
                       const startHour = hourFromISOTimestamp(block.startTime);
-                      const endHour = hourFromISOTimestamp(block.endTime);
+                      let endHour = hourFromISOTimestamp(block.endTime);
+
+                      // 다음날 00시 UI 표시 보정
+                      if (endHour === 0) {
+                        endHour = 24;
+                      }
+
                       return `${emoji} ${title} (${startHour}~${endHour}시)`;
                     }).join(', ');
 

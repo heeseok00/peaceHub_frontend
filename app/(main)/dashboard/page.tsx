@@ -239,7 +239,12 @@ export default function DashboardPage() {
       // ISO timestamp에서 요일과 시간 추출 (UTC 기준, 타임존 변환 없음)
       const day = getDayOfWeekFromISO(block.startTime);
       const startHour = hourFromISOTimestamp(block.startTime);
-      const endHour = hourFromISOTimestamp(block.endTime);
+      let endHour = hourFromISOTimestamp(block.endTime);
+
+      // 다음날 00시 예외처리
+      if (endHour === 0) {
+        endHour = 24;
+      }
 
       // 시간대별로 상태 설정 (QUIET, OUT만 표시, TASK는 assignments에서 처리)
       if (block.type === 'quiet' || block.type === 'out') {

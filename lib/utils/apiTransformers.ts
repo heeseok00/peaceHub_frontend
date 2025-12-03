@@ -283,7 +283,12 @@ export function fromBackendSchedule(blocks: BackendTimeBlock[]): WeeklySchedule 
 
     const slot = fromBackendTimeSlot(block.type);
     const startHour = hourFromISOTimestamp(startTimeStr);
-    const endHour = hourFromISOTimestamp(endTimeStr);
+    let endHour = hourFromISOTimestamp(endTimeStr);
+
+    // 다음날 00시 예외처리
+    if (endHour === 0) {
+      endHour = 24;
+    }
 
     // startHour부터 endHour 이전까지 TimeSlot 설정
     for (let hour = startHour; hour < endHour && hour < 24; hour++) {
@@ -356,7 +361,8 @@ export function validateBackendSchedule(
         console.error(`[Transform] validateBackendSchedule - Failed: ${error}`);
         return { valid: false, error };
       }
-      if (endHour <= 0 || endHour > 24) {
+      // endHour === 0은 다음날 00시(24시)를 의미하므로 유효함
+      if (endHour < 0 || endHour > 24) {
         const error = `Invalid end hour: ${endHour}`;
         console.error(`[Transform] validateBackendSchedule - Failed: ${error}`);
         return { valid: false, error };

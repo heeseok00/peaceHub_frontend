@@ -42,7 +42,12 @@ export default function TimelineBar({
     .filter(block => block.type === 'task')
     .forEach(block => {
       const startHour = hourFromISOTimestamp(block.startTime);
-      const endHour = hourFromISOTimestamp(block.endTime);
+      let endHour = hourFromISOTimestamp(block.endTime);
+
+      // 다음날 00시 예외처리
+      if (endHour === 0) {
+        endHour = 24;
+      }
 
       for (let hour = startHour; hour < endHour && hour < 24; hour++) {
         if (!tasksByHour.has(hour)) {
@@ -167,7 +172,13 @@ export default function TimelineBar({
                     const title = taskBlock.taskInfo?.title || '업무';
                     const emoji = getTaskEmojiByTitle(title);
                     const startHour = hourFromISOTimestamp(taskBlock.startTime);
-                    const endHour = hourFromISOTimestamp(taskBlock.endTime);
+                    let endHour = hourFromISOTimestamp(taskBlock.endTime);
+
+                    // 다음날 00시 UI 표시 보정
+                    if (endHour === 0) {
+                      endHour = 24;
+                    }
+
                     return (
                       <p key={idx} className="text-xs text-green-200">
                         {emoji} {title} ({startHour}~{endHour}시)
