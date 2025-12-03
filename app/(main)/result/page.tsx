@@ -70,11 +70,19 @@ function formatDate(date: Date): string {
 }
 
 function formatTimeRange(start: Date, end: Date): string {
-  const startHour = String(start.getHours()).padStart(2, '0');
-  const startMin = String(start.getMinutes()).padStart(2, '0');
-  const endHour = String(end.getHours()).padStart(2, '0');
-  const endMin = String(end.getMinutes()).padStart(2, '0');
-  return `${startHour}:${startMin}-${endHour}:${endMin}`;
+  // UTC 시간 사용 (백엔드가 UTC로 저장하므로)
+  const startHour = String(start.getUTCHours()).padStart(2, '0');
+  const startMin = String(start.getUTCMinutes()).padStart(2, '0');
+  let endHour = end.getUTCHours();
+  const endMin = String(end.getUTCMinutes()).padStart(2, '0');
+
+  // 다음날 00시 예외처리 (24시로 표시)
+  if (endHour === 0 && end.getUTCMinutes() === 0) {
+    endHour = 24;
+  }
+
+  const endHourStr = String(endHour).padStart(2, '0');
+  return `${startHour}:${startMin}-${endHourStr}:${endMin}`;
 }
 
 // ==================== Component ====================
