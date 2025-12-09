@@ -27,7 +27,7 @@ export function getDayOfWeek(date: Date): DayOfWeek {
   // JavaScript의 getDay(): 0(일) ~ 6(토)
   // 월요일 기준으로 변환: 월=0, 화=1, ..., 일=6
   const days: DayOfWeek[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-  const jsDay = date.getUTCDay(); // 0=일요일, 1=월요일, ..., 6=토요일
+  const jsDay = date.getDay(); // 0=일요일, 1=월요일, ..., 6=토요일
   const adjustedDay = jsDay === 0 ? 6 : jsDay - 1; // 일요일(0)을 6으로, 나머지는 -1
   return days[adjustedDay];
 }
