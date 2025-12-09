@@ -259,3 +259,49 @@ export function addDaysToDateString(dateStr: string, days: number): string {
   const resultDay = String(date.getDate()).padStart(2, '0');
   return `${resultYear}-${resultMonth}-${resultDay}`;
 }
+
+// ==================== UTC Date Formatting Functions (for Backend Timestamps) ====================
+
+/**
+ * UTC 기준으로 날짜를 "M/D" 형식으로 포맷
+ *
+ * 백엔드 UTC timestamp 표시 시 사용합니다.
+ *
+ * @param date Date 객체 (UTC timestamp에서 생성된 경우)
+ * @returns M/D 형식의 문자열 (예: "12/15")
+ *
+ * @example
+ * const date = new Date("2025-12-15T16:00:00.000Z");
+ * formatDateUTC(date); // "12/15"
+ */
+export function formatDateUTC(date: Date): string {
+  const month = date.getUTCMonth() + 1;
+  const day = date.getUTCDate();
+  return `${month}/${day}`;
+}
+
+/**
+ * UTC 기준으로 한글 요일 문자열 반환
+ *
+ * 백엔드 UTC timestamp 표시 시 사용합니다.
+ * getDayOfWeekFromISO()의 결과를 한글로 변환합니다.
+ *
+ * @param dayOfWeek DayOfWeek 타입 ('mon' | 'tue' | ...)
+ * @returns 한글 요일 문자열 (예: "월", "화", ...)
+ *
+ * @example
+ * const day = getDayOfWeekFromISO("2025-12-15T16:00:00.000Z"); // 'mon'
+ * formatDayOfWeekKorean(day); // "월"
+ */
+export function formatDayOfWeekKorean(dayOfWeek: DayOfWeek): string {
+  const dayMap: Record<DayOfWeek, string> = {
+    mon: '월',
+    tue: '화',
+    wed: '수',
+    thu: '목',
+    fri: '금',
+    sat: '토',
+    sun: '일',
+  };
+  return dayMap[dayOfWeek];
+}

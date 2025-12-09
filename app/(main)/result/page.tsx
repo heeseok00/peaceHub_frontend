@@ -5,6 +5,7 @@ import { MainLoadingSpinner } from '@/components/common/LoadingSpinner';
 import Card from '@/components/ui/Card';
 import { getMemberTaskSchedule } from '@/lib/api/endpoints';
 import type { MemberTaskSchedule } from '@/types/api';
+import { getDayOfWeekFromISO, formatDayOfWeekKorean, formatDateUTC } from '@/lib/utils/dateHelpers';
 
 // ==================== Helper Functions ====================
 
@@ -42,31 +43,21 @@ function groupByUser(schedules: MemberTaskSchedule[]): UserTaskGroup[] {
     const startDate = new Date(schedule.startTime);
     const endDate = new Date(schedule.endTime);
 
+    // Use getDayOfWeekFromISO() for day-of-week (already UTC-aware!)
+    const dayOfWeek = getDayOfWeekFromISO(schedule.startTime);
+
     grouped.get(userName)!.tasks.push({
       id: schedule.id,
       taskTitle: schedule.roomTask.title,
       startTime: startDate,
       endTime: endDate,
-      dayOfWeek: formatDayOfWeek(startDate),
-      dateString: formatDate(startDate),
+      dayOfWeek: formatDayOfWeekKorean(dayOfWeek),
+      dateString: formatDateUTC(startDate),
       timeString: formatTimeRange(startDate, endDate),
     });
   });
 
   return Array.from(grouped.values());
-}
-
-function formatDayOfWeek(date: Date): string {
-  const days = ['월', '화', '수', '목', '금', '토', '일'];
-  const jsDay = date.getDay(); // 0=일요일, 1=월요일, ..., 6=토요일
-  const adjustedDay = jsDay === 0 ? 6 : jsDay - 1; // 월요일 기준으로 변환
-  return days[adjustedDay];
-}
-
-function formatDate(date: Date): string {
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  return `${month}/${day}`;
 }
 
 function formatTimeRange(start: Date, end: Date): string {

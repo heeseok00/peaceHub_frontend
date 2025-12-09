@@ -190,6 +190,40 @@ const weekStart = getWeekStart(new Date());
 const dayOfWeek = getDayOfWeek(new Date());
 ```
 
+### UTC vs Local Timezone Functions (IMPORTANT)
+
+**The codebase has separate utility functions for UTC and local timezone operations.**
+
+**UTC Functions (for Backend API Data)**:
+- **When to use**: Processing backend UTC timestamps (ISO 8601 format like `"2025-12-15T16:00:00.000Z"`)
+- **Functions**: `getDayOfWeekFromISO()`, `formatDateUTC()`, `formatDayOfWeekKorean()`
+- **Example**: Displaying task assignments from `/api/schedules/memberTask`
+- **Why**: Preserves backend's intended date/time without timezone conversion
+
+**Local Functions (for UI/Calendar Interactions)**:
+- **When to use**: Handling user interactions in browser's local timezone
+- **Functions**: `getDayOfWeek()`, `getWeekStart()`, `formatDateKorean()`, `getNextSunday()`, `isSameDay()`
+- **Example**: MonthlyCalendar date selection, deadline calculation
+- **Why**: User expects dates in their local timezone
+
+**Rule of Thumb**:
+```typescript
+// ✅ Backend UTC timestamp → Use getDayOfWeekFromISO()
+const dayOfWeek = getDayOfWeekFromISO("2025-12-15T16:00:00.000Z"); // 'mon'
+const dayKorean = formatDayOfWeekKorean(dayOfWeek); // "월"
+
+const date = new Date("2025-12-15T16:00:00.000Z");
+const dateStr = formatDateUTC(date); // "12/15"
+
+// ✅ User clicked date → Use local functions
+const userDate = new Date(2025, 11, 15); // User's local December 15
+const day = getDayOfWeek(userDate); // Day in user's timezone
+
+// ❌ WRONG - Backend UTC timestamp with local function
+const date = new Date(apiResponse.startTime);
+const day = getDayOfWeek(date); // BUG: Shifts by timezone offset!
+```
+
 **Schedule:**
 ```typescript
 import { createEmptySchedule, validateSchedule } from '@/lib/utils/scheduleHelpers';
